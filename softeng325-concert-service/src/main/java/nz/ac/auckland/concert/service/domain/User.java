@@ -40,11 +40,11 @@ public class User {
     }
 
     public CreditCard get_card() {
-        return _card;
+        return _creditCard;
     }
 
     public void set_card(CreditCard _card) {
-        this._card = _card;
+        this._creditCard = _card;
     }
 
     public String get_firstname() {
