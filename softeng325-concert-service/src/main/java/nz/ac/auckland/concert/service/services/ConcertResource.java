@@ -3,11 +3,9 @@ package nz.ac.auckland.concert.service.services;
 import nz.ac.auckland.concert.common.dto.ConcertDTO;
 import nz.ac.auckland.concert.common.dto.PerformerDTO;
 import nz.ac.auckland.concert.common.dto.UserDTO;
-import nz.ac.auckland.concert.common.message.Messages;
 import nz.ac.auckland.concert.service.domain.Concert;
 import nz.ac.auckland.concert.service.domain.Performer;
 import nz.ac.auckland.concert.service.domain.User;
-import org.hibernate.service.spi.ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,13 +18,15 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Class to implement a simple REST Web service for managing Concerts.
@@ -39,7 +39,7 @@ public class ConcertResource {
 
 	private static Logger _logger = LoggerFactory.getLogger(ConcertResource.class);
 
-    @GET
+	@GET
 	@Path("/concerts")
 	public Response getAllConcerts() {
 		EntityManager em = PersistenceManager.instance().createEntityManager();
@@ -116,7 +116,8 @@ public class ConcertResource {
 
 			return Response
 					.created(URI.create("/user/" + newUser.getUsername()))
-					.entity(new GenericEntity<UserDTO>(newUser){})
+					.entity(new GenericEntity<UserDTO>(newUser) {
+					})
 					.build();
 		} catch (Exception e) {
 			return Response.status(Response.Status.CONFLICT).build();
@@ -143,26 +144,31 @@ public class ConcertResource {
 		try {
 			User u = em.find(User.class, user.getUsername());
 			if (u == null) {
-				return Response.status(Response.Status.CONFLICT).build();
-			} else if (!u.get_passwordHash().equals(user.getPassword())) {
+				return Response.status(Response.Status.NOT_FOUND).build();
+			}
+			if (!u.get_passwordHash().equals(user.getPassword())) {
 				return Response.status(Response.Status.UNAUTHORIZED).build();
 			}
 
-			em.;
+			UUID token = UUID.randomUUID();
+			u.set_token(token.toString());
+			u.set_tokenTimeStamp(LocalDateTime.now());
+			em.merge(u);
 			em.getTransaction().commit();
 
 			return Response
-					.created(URI.create("/user/" + newUser.getUsername()))
-					.entity(new GenericEntity<UserDTO>(newUser){})
+					.accepted()
+					.entity(new GenericEntity<UserDTO>(user) {
+					})
+					.cookie(NewCookie.valueOf(token.toString()))
 					.build();
-		} catch (Exception e) {
-			return Response.status(Response.Status.CONFLICT).build();
 		} finally {
 			em.close();
 		}
 	}
-//
-//    /**
+}
+//2
+//    /**2
 //     * Retrieves a Concert based on its unique id. The HTTP response message
 //     * has a status code of either 200 or 404, depending on whether the
 //     * specified Concert is found.
@@ -291,6 +297,4 @@ public class ConcertResource {
 //        Query cq = em.createQuery("delete from Concert c");
 //        cq.executeUpdate();
 //        em.getTransaction().commit();
-//        return Response.noContent().build();
-//    }
-}
+//        return Response.noContent())

@@ -37,6 +37,9 @@ public class User {
 	@Column(name = "tokenTimeStamp", nullable = true)
 	private LocalDateTime _tokenTimeStamp;
 
+	public User() {
+	}
+
 	public User(UserDTO dto) {
 		this._username = dto.getUsername();
 		this._passwordHash = dto.getPassword();
@@ -48,8 +51,8 @@ public class User {
 		return _username;
     }
 
-    public void set_username(String _username) {
-        this._username = _username;
+	public void set_user2name(String _username) {
+		this._username = _username;
     }
 
     public String get_passwordHash() {

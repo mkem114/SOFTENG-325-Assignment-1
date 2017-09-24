@@ -13,14 +13,11 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
-import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class DefaultService implements ConcertService {
@@ -81,7 +78,8 @@ public class DefaultService implements ConcertService {
 
 			int responseCode = response.getStatus();
 			if (responseCode == Response.Status.CREATED.getStatusCode()) {
-				return response.readEntity(new GenericType<UserDTO>(){});
+				return response.readEntity(new GenericType<UserDTO>() {
+				});
 			} else if (responseCode == Response.Status.CONFLICT.getStatusCode()) {
 				throw new ServiceException(Messages.CREATE_USER_WITH_NON_UNIQUE_NAME);
 			} else if (responseCode == Response.Status.LENGTH_REQUIRED.getStatusCode()) {

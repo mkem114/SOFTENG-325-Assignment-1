@@ -1,8 +1,5 @@
 package nz.ac.auckland.concert.client.service;
 
-import java.awt.Image;
-import java.util.Set;
-
 import nz.ac.auckland.concert.common.dto.BookingDTO;
 import nz.ac.auckland.concert.common.dto.ConcertDTO;
 import nz.ac.auckland.concert.common.dto.CreditCardDTO;
@@ -11,6 +8,9 @@ import nz.ac.auckland.concert.common.dto.PerformerDTO;
 import nz.ac.auckland.concert.common.dto.ReservationDTO;
 import nz.ac.auckland.concert.common.dto.ReservationRequestDTO;
 import nz.ac.auckland.concert.common.dto.UserDTO;
+
+import java.awt.*;
+import java.util.Set;
 
 
 /**
@@ -235,7 +235,7 @@ public interface ConcertService {
 	 * Messages.UNAUTHENTICATED_REQUEST
 	 * 
 	 * Condition: the request includes an authentication token but it's not
-	 * recognised by the remote service.
+	 * recognised by the 2remote service.
 	 * Messages.BAD_AUTHENTICATON_TOKEN
 	 * 
 	 * Condition: there is a communication error.
