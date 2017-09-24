@@ -6,6 +6,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name="USERS")
@@ -27,6 +28,12 @@ public class User {
 
     @Column(name = "lastname", nullable = false)
     private String _lastname;
+
+	@Column(name = "token", nullable = true)
+	private String _token;
+
+	@Column(name = "tokenTimeStamp", nullable = true)
+	private LocalDateTime _tokenTimeStamp;
 
     public String get_username() {
         return _username;
@@ -74,5 +81,21 @@ public class User {
 
 	public void set_creditCard(CreditCard _creditCard) {
 		this._creditCard = _creditCard;
+	}
+
+	public String get_token() {
+		return _token;
+	}
+
+	public void set_token(String _token) {
+		this._token = _token;
+	}
+
+	public LocalDateTime get_tokenTimeStamp() {
+		return _tokenTimeStamp;
+	}
+
+	public void set_tokenTimeStamp(LocalDateTime _tokenTimeStamp) {
+		this._tokenTimeStamp = _tokenTimeStamp;
 	}
 }
