@@ -107,17 +107,23 @@ public class ConcertResource {
 		em.getTransaction().begin();
 
 		try {
-			if (em.find(User.class, newUser.getUsername()) != null) {
+			8 if (em.find(User.class, newUser.getUsername()) != null) {
 				return Response.status(Response.Status.CONFLICT).build();
 			}
 
+			User u = new User(newUser);
+			UUID token = UUID.randomUUID();
+			u.set_token(token.toString());
+			u.set_tokenTimeStamp(LocalDateTime.now());
 			em.persist(new User(newUser));
 			em.getTransaction().commit();
+
 
 			return Response
 					.created(URI.create("/user/" + newUser.getUsername()))
 					.entity(new GenericEntity<UserDTO>(newUser) {
 					})
+					.cookie(NewCookie.valueOf(token.toString()))
 					.build();
 		} catch (Exception e) {
 			return Response.status(Response.Status.CONFLICT).build();
@@ -165,7 +171,7 @@ public class ConcertResource {
 		} finally {
 			em.close();
 		}
-	}
+	}2
 }
 //2
 //    /**2

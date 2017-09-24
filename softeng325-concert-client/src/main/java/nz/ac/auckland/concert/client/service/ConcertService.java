@@ -235,7 +235,7 @@ public interface ConcertService {
 	 * Messages.UNAUTHENTICATED_REQUEST
 	 * 
 	 * Condition: the request includes an authentication token but it's not
-	 * recognised by the 2remote service.
+	 * recognised by the remote service.
 	 * Messages.BAD_AUTHENTICATON_TOKEN
 	 * 
 	 * Condition: there is a communication error.
