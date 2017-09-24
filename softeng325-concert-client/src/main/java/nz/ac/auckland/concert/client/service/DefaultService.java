@@ -143,7 +143,6 @@ public class DefaultService implements ConcertService {
 	@Override
 	public void confirmReservation(ReservationDTO reservation) throws ServiceException {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
@@ -168,5 +167,4 @@ public class DefaultService implements ConcertService {
 	public void cancelSubscription() {
 		throw new UnsupportedOperationException();
 	}
-
 }

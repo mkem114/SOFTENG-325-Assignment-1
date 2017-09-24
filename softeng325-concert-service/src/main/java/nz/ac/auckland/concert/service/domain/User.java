@@ -111,4 +111,7 @@ public class User {
 		this._tokenTimeStamp = _tokenTimeStamp;
 	}
 
+	public UserDTO convertToDTO() {
+		return new UserDTO(_username, _passwordHash, _lastname, _firstname);
+	}
 }

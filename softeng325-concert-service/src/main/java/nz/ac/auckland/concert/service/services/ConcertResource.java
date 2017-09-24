@@ -107,7 +107,7 @@ public class ConcertResource {
 		em.getTransaction().begin();
 
 		try {
-			8 if (em.find(User.class, newUser.getUsername()) != null) {
+			if (em.find(User.class, newUser.getUsername()) != null) {
 				return Response.status(Response.Status.CONFLICT).build();
 			}
 
@@ -155,26 +155,27 @@ public class ConcertResource {
 			if (!u.get_passwordHash().equals(user.getPassword())) {
 				return Response.status(Response.Status.UNAUTHORIZED).build();
 			}
-
-			UUID token = UUID.randomUUID();
-			u.set_token(token.toString());
-			u.set_tokenTimeStamp(LocalDateTime.now());
-			em.merge(u);
-			em.getTransaction().commit();
+			if (u.get_token() == null) {
+				UUID token = UUID.randomUUID();
+				u.set_token(token.toString());
+				u.set_tokenTimeStamp(LocalDateTime.now());
+				em.merge(u);
+				em.getTransaction().commit();
+			}
 
 			return Response
 					.accepted()
-					.entity(new GenericEntity<UserDTO>(user) {
+					.entity(new GenericEntity<UserDTO>(u.convertToDTO()) {
 					})
-					.cookie(NewCookie.valueOf(token.toString()))
+					.cookie(NewCookie.valueOf(u.get_token().toString()))
 					.build();
 		} finally {
 			em.close();
 		}
-	}2
+	}
 }
-//2
-//    /**2
+//
+//    /**
 //     * Retrieves a Concert based on its unique id. The HTTP response message
 //     * has a status code of either 200 or 404, depending on whether the
 //     * specified Concert is found.

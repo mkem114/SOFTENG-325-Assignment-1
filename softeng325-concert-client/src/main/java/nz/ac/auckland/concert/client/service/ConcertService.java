@@ -122,14 +122,14 @@ public interface ConcertService {
 	 * 
 	 * Condition: there is a communication error.
 	 * Messages.SERVICE_COMMUNICATION_ERROR
-	 * 
+	 * TODO PIazza question 54 REPORT
 	 */
 	Image getImageForPerformer(PerformerDTO performer) throws ServiceException;
 
 	/**
 	 * Attempts to reserve seats for a concert. The reservation is valid for a
 	 * short period that is determine by the remote service.
-	 * 
+	 * 2
 	 * @param reservationRequest a description of the reservation, including 
 	 * number of seats, price band, concert identifier, and concert date. All 
 	 * fields are expected to be filled.
