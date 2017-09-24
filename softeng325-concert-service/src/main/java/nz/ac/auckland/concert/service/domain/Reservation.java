@@ -2,8 +2,19 @@ package nz.ac.auckland.concert.service.domain;
 
 import nz.ac.auckland.concert.common.types.PriceBand;
 
-import javax.persistence.*;
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Table(name="RESERVATIONS")
@@ -25,10 +36,14 @@ public class Reservation {
     @Column(name = "datetime")
     private LocalDateTime _dateTime;
 
-    //SEATS
     @Column(name = "priceband", nullable = false)
     @Enumerated(EnumType.STRING)
     private PriceBand _priceBand;
+
+	@ElementCollection
+	@CollectionTable(name = "RESERVATION_SEATS", joinColumns = @JoinColumn(name = "rid"))
+	@Column(name = "seat", nullable = false)
+	private Set<Integer> _seats;
 
     public Long get_rID() {
         return _rID;
@@ -61,14 +76,6 @@ public class Reservation {
     public void set_dateTime(LocalDateTime _dateTime) {
         this._dateTime = _dateTime;
     }
-/*
-    public Set<SeatDTO> get_seats() {
-        return _seats;
-    }
-
-    public void set_seats(Set<SeatDTO> _seats) {
-        this._seats = _seats;
-    }*/
 
     public PriceBand get_priceBand() {
         return _priceBand;
@@ -77,4 +84,12 @@ public class Reservation {
     public void set_priceBand(PriceBand _priceBand) {
         this._priceBand = _priceBand;
     }
+
+	public Set<Integer> get_seats() {
+		return _seats;
+	}
+
+	public void set_seats(Set<Integer> _seats) {
+		this._seats = _seats;
+	}
 }

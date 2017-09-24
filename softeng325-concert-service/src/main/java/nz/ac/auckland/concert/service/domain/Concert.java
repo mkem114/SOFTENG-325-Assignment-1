@@ -2,7 +2,19 @@ package nz.ac.auckland.concert.service.domain;
 
 import nz.ac.auckland.concert.common.types.PriceBand;
 
-import javax.persistence.*;
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.MapKeyColumn;
+import javax.persistence.MapKeyEnumerated;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -22,8 +34,8 @@ public class Concert {
 
     @ElementCollection
     @CollectionTable(name = "CONCERT_DATES", joinColumns =@JoinColumn(name = "cid"))
-    @Column(name = "date", nullable = false)
-    private Set<LocalDateTime> _dates;
+	@Column(name = "datetime", nullable = false)
+	private Set<LocalDateTime> _dates;
 
     @ElementCollection
     @JoinTable(name = "CONCERT_TARIFFS", joinColumns = @JoinColumn(name = "cid"))
@@ -33,8 +45,10 @@ public class Concert {
     private Map<PriceBand, BigDecimal> _tariff;
 
     @ManyToMany
-    @JoinTable(name = "CONCERT_PERFORMER", joinColumns = @JoinColumn(name = "cid"), inverseJoinColumns = @JoinColumn(name = "pid"))
-    @Column(name = "performer", nullable = false)
+	@JoinTable(name = "CONCERT_PERFORMER",
+			joinColumns = @JoinColumn(name = "cid"),
+			inverseJoinColumns = @JoinColumn(name = "pid"))
+	@Column(name = "performer", nullable = false)
     private Set<Performer> _performerIds;
 
     public Long get_cID() {

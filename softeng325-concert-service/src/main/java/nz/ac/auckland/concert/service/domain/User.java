@@ -1,6 +1,11 @@
 package nz.ac.auckland.concert.service.domain;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 @Entity
 @Table(name="USERS")
@@ -62,4 +67,12 @@ public class User {
     public void set_lastname(String _lastname) {
         this._lastname = _lastname;
     }
+
+	public CreditCard get_creditCard() {
+		return _creditCard;
+	}
+
+	public void set_creditCard(CreditCard _creditCard) {
+		this._creditCard = _creditCard;
+	}
 }

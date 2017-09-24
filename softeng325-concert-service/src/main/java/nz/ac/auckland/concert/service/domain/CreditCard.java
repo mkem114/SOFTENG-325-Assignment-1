@@ -2,7 +2,13 @@ package nz.ac.auckland.concert.service.domain;
 
 import nz.ac.auckland.concert.common.dto.CreditCardDTO;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.time.LocalDate;
 
 @Entity
