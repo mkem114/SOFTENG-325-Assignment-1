@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 public class User {
 
     @Id
-    @Column(name = "username", nullable = false)
-    private String _username;
+	@Column(name = "username", nullable = false, unique = true)
+	private String _username;
 
     @Column(name = "passwordhash", nullable = false)
     private String _passwordHash; //I CBF implementing just know I thought of it

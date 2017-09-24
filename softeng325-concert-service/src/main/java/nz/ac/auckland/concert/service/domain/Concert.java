@@ -1,5 +1,6 @@
 package nz.ac.auckland.concert.service.domain;
 
+import nz.ac.auckland.concert.common.dto.ConcertDTO;
 import nz.ac.auckland.concert.common.types.PriceBand;
 
 import javax.persistence.CollectionTable;
@@ -17,6 +18,7 @@ import javax.persistence.MapKeyEnumerated;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,20 +28,20 @@ public class Concert {
 
     @Id
     @GeneratedValue
-    @Column(name = "cid", nullable = false)
-    private Long _cID;
+	@Column(name = "cid", nullable = false, unique = true)
+	private Long _cID;
 
     @Column(name = "title", nullable = false)
     private String _title;
 
     @ElementCollection
     @CollectionTable(name = "CONCERT_DATES", joinColumns =@JoinColumn(name = "cid"))
-	@Column(name = "datetime", nullable = false)
+	@Column(name = "datetime", nullable = false, unique = true)
 	private Set<LocalDateTime> _dates;
 
     @ElementCollection
-    @JoinTable(name = "CONCERT_TARIFFS", joinColumns = @JoinColumn(name = "cid"))
-    @MapKeyColumn(name = "price_band")
+	@JoinTable(name = "CONCERT_TARIFS", joinColumns = @JoinColumn(name = "cid"))
+	@MapKeyColumn(name = "price_band")
     @Column(name = "tariff", nullable = false)
     @MapKeyEnumerated(EnumType.STRING)
     private Map<PriceBand, BigDecimal> _tariff;
@@ -48,8 +50,16 @@ public class Concert {
 	@JoinTable(name = "CONCERT_PERFORMER",
 			joinColumns = @JoinColumn(name = "cid"),
 			inverseJoinColumns = @JoinColumn(name = "pid"))
-	@Column(name = "performer", nullable = false)
-    private Set<Performer> _performerIds;
+	@Column(name = "performer", nullable = false, unique = true)
+	private Set<Performer> _performers;
+
+	public ConcertDTO convertToDTO() {
+		Set<Long> performerIDs = new HashSet<>();
+		for (Performer p : _performers) {
+			performerIDs.add(p.get_pID());
+		}
+		return new ConcertDTO(_cID, _title, _dates, _tariff, performerIDs);
+	}
 
     public Long get_cID() {
         return _cID;
@@ -84,10 +94,10 @@ public class Concert {
     }
 
     public Set<Performer> get_performerIds() {
-        return _performerIds;
-    }
+		return _performers;
+	}
 
     public void set_performerIds(Set<Performer> _performerIds) {
-        this._performerIds = _performerIds;
-    }
+		this._performers = _performerIds;
+	}
 }

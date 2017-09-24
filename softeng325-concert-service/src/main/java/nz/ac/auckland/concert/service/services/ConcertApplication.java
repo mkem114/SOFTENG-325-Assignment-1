@@ -1,5 +1,6 @@
 package nz.ac.auckland.concert.service.services;
 
+import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import java.util.HashSet;
 import java.util.Set;
@@ -10,6 +11,7 @@ import java.util.Set;
  * 
  *
  */
+@ApplicationPath("/services")
 public class ConcertApplication extends Application {
 
 	// This property should be used by your Resource class. It represents the 

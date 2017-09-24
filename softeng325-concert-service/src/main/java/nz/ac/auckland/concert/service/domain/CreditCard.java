@@ -28,8 +28,8 @@ public class CreditCard {
     @Column(name = "name", nullable = false)
     private String _name;
 
-    @Column(name = "number", nullable = false)
-    private String _number;
+	@Column(name = "number", nullable = false, unique = true)
+	private String _number;
 
     @Column(name = "date", nullable = false)
     private LocalDate _expiryDate;

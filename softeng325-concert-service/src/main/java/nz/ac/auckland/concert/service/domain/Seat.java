@@ -20,14 +20,18 @@ public class Seat {
 	@Id
 	@ManyToOne
 	private Concert _concert;
+
 	@Id
 	@Column(name = "datetime", nullable = false)
 	private LocalDateTime _datetime;
+
 	@Id
 	@Column(name = "number", nullable = false)
 	private Integer _number;
+
 	@ManyToOne
 	private Reservation _reservation;
+
 	@Column(name = "status", nullable = false)
 	@Enumerated(EnumType.STRING)
 	private SeatStatus _status = SeatStatus.FREE;
@@ -81,4 +85,24 @@ class SeatId implements Serializable {
 	Concert _concert;
 	LocalDateTime _datetime;
 	Integer _number;
+
+	@Override
+	public int hashCode() {
+		int result = _concert != null ? _concert.hashCode() : 0;
+		result = 31 * result + (_datetime != null ? _datetime.hashCode() : 0);
+		result = 31 * result + (_number != null ? _number.hashCode() : 0);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		SeatId seatId = (SeatId) o;
+
+		if (_concert != null ? !_concert.equals(seatId._concert) : seatId._concert != null) return false;
+		if (_datetime != null ? !_datetime.equals(seatId._datetime) : seatId._datetime != null) return false;
+		return _number != null ? _number.equals(seatId._number) : seatId._number == null;
+	}
 }

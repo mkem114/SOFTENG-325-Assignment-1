@@ -1,5 +1,6 @@
 package nz.ac.auckland.concert.service.domain;
 
+import nz.ac.auckland.concert.common.dto.PerformerDTO;
 import nz.ac.auckland.concert.common.types.Genre;
 
 import javax.persistence.Column;
@@ -12,6 +13,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -77,4 +79,12 @@ public class Performer {
     public void set_concerts(Set<Concert> _concerts) {
         this._concerts = _concerts;
     }
+
+	public PerformerDTO convertToDTO() {
+		Set<Long> concertIDs = new HashSet<>();
+		for (Concert c : _concerts) {
+			concertIDs.add(c.get_cID());
+		}
+		return new PerformerDTO(_pID, _name, _imageName, _genre, concertIDs);
+	}
 }
