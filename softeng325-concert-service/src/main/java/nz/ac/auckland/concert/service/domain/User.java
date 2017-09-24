@@ -1,5 +1,7 @@
 package nz.ac.auckland.concert.service.domain;
 
+import nz.ac.auckland.concert.common.dto.UserDTO;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -20,8 +22,8 @@ public class User {
     private String _passwordHash; //I CBF implementing just know I thought of it
 
     @ManyToOne
-    @JoinColumn(name = "creditcard", nullable = false)
-    private CreditCard _creditCard;
+	@JoinColumn(name = "creditcard", nullable = true)
+	private CreditCard _creditCard;
 
     @Column(name = "firstname", nullable = false)
     private String _firstname;
@@ -35,8 +37,15 @@ public class User {
 	@Column(name = "tokenTimeStamp", nullable = true)
 	private LocalDateTime _tokenTimeStamp;
 
-    public String get_username() {
-        return _username;
+	public User(UserDTO dto) {
+		this._username = dto.getUsername();
+		this._passwordHash = dto.getPassword();
+		this._firstname = dto.getFirstname();
+		this._lastname = dto.getLastname();
+	}
+
+	public String get_username() {
+		return _username;
     }
 
     public void set_username(String _username) {
@@ -98,4 +107,5 @@ public class User {
 	public void set_tokenTimeStamp(LocalDateTime _tokenTimeStamp) {
 		this._tokenTimeStamp = _tokenTimeStamp;
 	}
+
 }

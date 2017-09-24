@@ -11,13 +11,16 @@ import nz.ac.auckland.concert.common.message.Messages;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class DefaultService implements ConcertService {
@@ -26,10 +29,10 @@ public class DefaultService implements ConcertService {
 
 	@Override
 	public Set<ConcertDTO> getConcerts() throws ServiceException {
+		Client client = ClientBuilder.newClient();
 		try {
-			Client _client;
-			_client = ClientBuilder.newClient();
-			Invocation.Builder builder = _client.target(WEB_SERVICE_URI + "/concerts").request().accept(MediaType.APPLICATION_XML);
+
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/concerts").request().accept(MediaType.APPLICATION_XML);
 			Response response = builder.get();
 			Set<ConcertDTO> concerts;
 			if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -38,19 +41,20 @@ public class DefaultService implements ConcertService {
 			} else {
 				concerts = new HashSet<>();
 			}
-			_client.close();
+			client.close();
 			return concerts;
 		} catch (Exception e) {
 			throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+		} finally {
+			client.close();
 		}
 	}
 
 	@Override
 	public Set<PerformerDTO> getPerformers() throws ServiceException {
+		Client client = ClientBuilder.newClient();
 		try {
-			Client _client;
-			_client = ClientBuilder.newClient();
-			Invocation.Builder builder = _client.target(WEB_SERVICE_URI + "/performers").request().accept(MediaType.APPLICATION_XML);
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/performers").request().accept(MediaType.APPLICATION_XML);
 			Response response = builder.get();
 			Set<PerformerDTO> performers;
 			if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -59,43 +63,71 @@ public class DefaultService implements ConcertService {
 			} else {
 				performers = new HashSet<>();
 			}
-			_client.close();
+			client.close();
 			return performers;
 		} catch (Exception e) {
 			throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+		} finally {
+			client.close();
 		}
 	}
 
 	@Override
 	public UserDTO createUser(UserDTO newUser) throws ServiceException {
+		Client client = ClientBuilder.newClient();
 		try {
-			Client _client;
-			_client = ClientBuilder.newClient();
-			Invocation.Builder builder = _client.target(WEB_SERVICE_URI + "/user").request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/user").request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+			Response response = builder.post(Entity.entity(newUser, MediaType.APPLICATION_XML));
 
-			GenericEntity<UserDTO> wrapper = new GenericEntity<UserDTO>(newUser) {
-			};
-			builder.post(wrapper);
-
-			/*Response response = builder.get();
-			Set<PerformerDTO> performers;
-			if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-				performers = response.readEntity(new GenericType<Set<PerformerDTO>>() {
-				});
+			int responseCode = response.getStatus();
+			if (responseCode == Response.Status.CREATED.getStatusCode()) {
+				return response.readEntity(new GenericType<UserDTO>(){});
+			} else if (responseCode == Response.Status.CONFLICT.getStatusCode()) {
+				throw new ServiceException(Messages.CREATE_USER_WITH_NON_UNIQUE_NAME);
+			} else if (responseCode == Response.Status.LENGTH_REQUIRED.getStatusCode()) {
+				throw new ServiceException(Messages.CREATE_USER_WITH_MISSING_FIELDS);
 			} else {
-				performers = new HashSet<>();
+				throw new ServiceException("UNEXPECTED HTTP STATUS CODE");
 			}
-			_client.close();
-			return performers;*/
 		} catch (Exception e) {
-			throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+			if (ServiceException.class.isInstance(e)) {
+				throw e;
+			} else {
+				throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+			}
+		} finally {
+			client.close();
 		}
 	}
 
 	@Override
 	public UserDTO authenticateUser(UserDTO user) throws ServiceException {
-		// TODO Auto-generated method stub
-		return null;
+		Client client = ClientBuilder.newClient();
+		try {
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/login").request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+			Response response = builder.post(Entity.entity(user, MediaType.APPLICATION_XML));
+
+			int responseCode = response.getStatus();
+			if (responseCode == Response.Status.ACCEPTED.getStatusCode()) {
+				return response.readEntity(new GenericType<UserDTO>(){});
+			} else if (responseCode == Response.Status.LENGTH_REQUIRED.getStatusCode()) {
+				throw new ServiceException(Messages.AUTHENTICATE_USER_WITH_MISSING_FIELDS);
+			} else if (responseCode == Response.Status.NOT_FOUND.getStatusCode()) {
+				throw new ServiceException(Messages.AUTHENTICATE_NON_EXISTENT_USER);
+			} else if (responseCode == Response.Status.UNAUTHORIZED.getStatusCode()) {
+				throw new ServiceException(Messages.AUTHENTICATE_USER_WITH_ILLEGAL_PASSWORD);
+			} else {
+				throw new ServiceException("UNEXPECTED HTTP STATUS CODE");
+			}
+		} catch (Exception e) {
+			if (ServiceException.class.isInstance(e)) {
+				throw e;
+			} else {
+				throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+			}
+		} finally {
+			client.close();
+		}
 	}
 
 	@Override
