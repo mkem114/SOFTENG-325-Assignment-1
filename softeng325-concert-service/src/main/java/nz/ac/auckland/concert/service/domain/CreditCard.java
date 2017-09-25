@@ -6,7 +6,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDate;
@@ -15,10 +14,9 @@ import java.time.LocalDate;
 @Table(name="CREDITCARDS")
 public class CreditCard {
 
-    @Id
-    @GeneratedValue
-    @Column(name = "ccid", nullable = false)
-    private int _ccID;
+	@Id
+	@Column(name = "number", nullable = false, unique = true)
+	private String _number;
 
     // Just doing a dumb implementation of the credit card. IRL should store the authorisation. Also never store CCV
     @Column(name = "type", nullable = false)
@@ -28,19 +26,15 @@ public class CreditCard {
     @Column(name = "name", nullable = false)
     private String _name;
 
-	@Column(name = "number", nullable = false, unique = true)
-	private String _number;
-
     @Column(name = "date", nullable = false)
     private LocalDate _expiryDate;
 
-    public int get_ccID() {
-        return _ccID;
-    }
-
-    public void set_ccID(int _ccID) {
-        this._ccID = _ccID;
-    }
+	public CreditCard(CreditCardDTO dto) {
+		_number = dto.getNumber();
+		_name = dto.getName();
+		_expiryDate = dto.getExpiryDate();
+		_type = dto.getType();
+	}
 
     public CreditCardDTO.Type get_type() {
         return _type;

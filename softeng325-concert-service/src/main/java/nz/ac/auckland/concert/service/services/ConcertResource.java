@@ -5,6 +5,7 @@ import nz.ac.auckland.concert.common.dto.CreditCardDTO;
 import nz.ac.auckland.concert.common.dto.PerformerDTO;
 import nz.ac.auckland.concert.common.dto.UserDTO;
 import nz.ac.auckland.concert.service.domain.Concert;
+import nz.ac.auckland.concert.service.domain.CreditCard;
 import nz.ac.auckland.concert.service.domain.Performer;
 import nz.ac.auckland.concert.service.domain.User;
 import org.slf4j.Logger;
@@ -118,15 +119,14 @@ public class ConcertResource {
 			UUID token = UUID.randomUUID();
 			u.set_token(token.toString());
 			u.set_tokenTimeStamp(LocalDateTime.now());
-			em.persist(new User(newUser));
+			em.persist(u);
 			em.getTransaction().commit();
-
 
 			return Response
 					.created(URI.create("/user/" + newUser.getUsername()))
 					.entity(new GenericEntity<UserDTO>(newUser) {
 					})
-					.cookie(NewCookie.valueOf(token.toString()))
+					.cookie(new NewCookie("authenticationToken", token.toString()))
 					.build();
 		} catch (Exception e) {
 			return Response.status(Response.Status.CONFLICT).build();
@@ -170,7 +170,7 @@ public class ConcertResource {
 					.accepted()
 					.entity(new GenericEntity<UserDTO>(u.convertToDTO()) {
 					})
-					.cookie(NewCookie.valueOf(u.get_token().toString()))
+					.cookie(new NewCookie("authenticationToken", u.get_token()))
 					.build();
 		} finally {
 			em.close();
@@ -186,154 +186,21 @@ public class ConcertResource {
 
 		EntityManager em = PersistenceManager.instance().createEntityManager();
 		em.getTransaction().begin();
-
 		try {
-			User u = (User) em.createQuery("SELECT U FROM USERS U WHERE U.TOKEN=:token").setParameter("token", token.getValue()).getSingleResult();
+			User u = (User) em.createQuery("SELECT U FROM User U WHERE U._token = :token")
+					.setParameter("token", token.getValue()).getSingleResult();
 			if (u == null) {//TODO check if timestamp is beyond limit for authorisation
 				return Response.status(Response.Status.UNAUTHORIZED).build();
 			}
 
-			u.set_creditCard(creditcard.);
+			u.set_creditCard(new CreditCard(creditcard));
+			em.persist(u.get_creditCard());
+			em.merge(u);
+			em.getTransaction().commit();
 
-			return Response
-					.accepted()
-					.entity(new GenericEntity<UserDTO>(u.convertToDTO()) {
-					})
-					.cookie(NewCookie.valueOf(u.get_token().toString()))
-					.build();
+			return Response.accepted().build();
 		} finally {
 			em.close();
 		}
 	}
 }
-//
-//    /**
-//     * Retrieves a Concert based on its unique id. The HTTP response message
-//     * has a status code of either 200 or 404, depending on whether the
-//     * specified Concert is found.
-//     *
-//     * When clientId is null, the HTTP request message doesn't contain a cookie
-//     * named clientId (Config.CLIENT_COOKIE), this method generates a new
-//     * cookie, whose value is a randomly generated UUID. This method returns
-//     * the new cookie as part of the HTTP response message.
-//     *
-//     * This method maps to the URI pattern <base-uri>/concerts/{id}.
-//     *
-//     * @param id the unique ID of the Concert.
-//     *
-//     * @return a Response object containing the required Concert.
-//     */
-//    @GET
-//    @Path("{id}")
-//    public Response retrieveConcert(@PathParam("id") long id) {
-//        EntityManager em = PersistenceManager.instance().createEntityManager();
-//        em.getTransaction().begin();
-//
-//        Concert c = em.find(Concert.class, id);
-//        em.getTransaction().commit();
-//
-//        if (c == null) {
-//            throw new WebApplicationException(Response.Status.NOT_FOUND);
-//        }
-//
-//        return Response.ok(c).build();
-//    }
-//
-//    /**
-//     * Creates a new Concert. This method assigns an ID to the new Concert and
-//     * stores it in memory. The HTTP Response message returns a Location header
-//     * with the URI of the new Concert and a status code of 201.
-//     *
-//     * When clientId is null, the HTTP request message doesn't contain a cookie
-//     * named clientId (Config.CLIENT_COOKIE), this method generates a new
-//     * cookie, whose value is a randomly generated UUID. This method returns
-//     * the new cookie as part of the HTTP response message.
-//     *
-//     * This method maps to the URI pattern <base-uri>/concerts.
-//     *
-//     * @param concert the new Concert to create.
-//     *
-//     * @return a Response object containing the status code 201 and a Location
-//     * header.
-//     */
-//    @POST
-//    public Response createConcert(Concert concert) {
-//        EntityManager em = PersistenceManager.instance().createEntityManager();
-//        em.getTransaction().begin();
-//
-//        em.persist(concert);
-//        em.getTransaction().commit();
-//
-//        return Response.created(URI.create("/concerts/" + concert.get_cID())).build();
-//    }
-//
-//
-//    @PUT
-//    public Response updateConcert(Concert concert) {
-//        EntityManager em = PersistenceManager.instance().createEntityManager();
-//        em.getTransaction().begin();
-//        Concert c = em.find(Concert.class, concert.get_cID());
-//        em.getTransaction().commit();
-//
-//        if (c != null) {
-//            em.getTransaction().begin();
-//            em.merge(concert);
-//            em.getTransaction().commit();
-//
-//            return Response.status(204).build();
-//        }
-//
-//        return null;
-//    }
-//
-//    /**
-//     * Deletes all Concerts, returning a status code of 204.
-//     *
-//     * When clientId is null, the HTTP request message doesn't contain a cookie
-//     * named clientId (Config.CLIENT_COOKIE), this method generates a new
-//     * cookie, whose value is a randomly generated UUID. This method returns
-//     * the new cookie as part of the HTTP response message.
-//     *
-//     * This method maps to the URI pattern <base-uri>/concerts.
-//     *
-//     * @return a Response object containing the status code 204.
-//     */
-//    @DELETE
-//    @Path("{id}")
-//    public Response deleteConcert(@PathParam("id") long id) {
-//        EntityManager em = PersistenceManager.instance().createEntityManager();
-//        em.getTransaction().begin();
-//        Concert c = em.find(Concert.class, id);
-//        em.getTransaction().commit();
-//
-//        if (c != null) {
-//            em.getTransaction().begin();
-//            em.remove(c);
-//            em.getTransaction().commit();
-//
-//            return Response.status(204).build();
-//        }
-//
-//        throw new WebApplicationException(Response.Status.NOT_FOUND);
-//    }
-//
-//    /**
-//     * Deletes all Concerts, returning a status code of 204.
-//     *
-//     * When clientId is null, the HTTP request message doesn't contain a cookie
-//     * named clientId (Config.CLIENT_COOKIE), this method generates a new
-//     * cookie, whose value is a randomly generated UUID. This method returns
-//     * the new cookie as part of the HTTP response message.
-//     *
-//     * This method maps to the URI pattern <base-uri>/concerts.
-//     *
-//     * @return a Response object containing the status code 204.
-//     */
-//    @DELETE
-//    public Response deleteAllConcerts() {
-//        EntityManager em = PersistenceManager.instance().createEntityManager();
-//        em.getTransaction().begin();
-//        Query cq = em.createQuery("delete from Concert c");
-//        cq.executeUpdate();
-//        em.getTransaction().commit();
-//        return Response.noContent())

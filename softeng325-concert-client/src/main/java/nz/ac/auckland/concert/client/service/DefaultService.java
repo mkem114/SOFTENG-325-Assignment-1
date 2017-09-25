@@ -156,7 +156,7 @@ public class DefaultService implements ConcertService {
 		try {
 			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/add_credit_card").request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
 			//TODO Turn mapping of authentication cookie into mapped to authtoken or something
-			Response response = builder.cookie(authenticationToken).post(Entity.entity(creditCard, MediaType.APPLICATION_XML));
+			Response response = builder.cookie("authenticationToken", authenticationToken.getValue()).post(Entity.entity(creditCard, MediaType.APPLICATION_XML));
 
 			int responseCode = response.getStatus();
 			if (responseCode == Response.Status.ACCEPTED.getStatusCode()) {
