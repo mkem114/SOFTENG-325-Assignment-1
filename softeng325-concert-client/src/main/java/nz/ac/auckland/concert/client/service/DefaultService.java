@@ -1,5 +1,13 @@
 package nz.ac.auckland.concert.client.service;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import nz.ac.auckland.concert.common.dto.BookingDTO;
 import nz.ac.auckland.concert.common.dto.ConcertDTO;
 import nz.ac.auckland.concert.common.dto.CreditCardDTO;
@@ -9,6 +17,7 @@ import nz.ac.auckland.concert.common.dto.ReservationRequestDTO;
 import nz.ac.auckland.concert.common.dto.UserDTO;
 import nz.ac.auckland.concert.common.message.Messages;
 
+import javax.imageio.ImageIO;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -18,10 +27,25 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.awt.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 public class DefaultService implements ConcertService {
+
+	// Name of the S3 bucket that stores images.
+	private static final String AWS_BUCKET = "a-little-bit-bucket";
+
+	// Download directory - a directory named "images" in the user's home
+	// directory.
+	private static final String FILE_SEPARATOR = System
+			.getProperty("file.separator");
+	private static final String USER_DIRECTORY = System
+			.getProperty("user.home");
+	private static final String DOWNLOAD_DIRECTORY = USER_DIRECTORY
+			+ FILE_SEPARATOR + "images";
 
 	private static String WEB_SERVICE_URI = "http://localhost:10000/services/resource";
 
@@ -135,8 +159,44 @@ public class DefaultService implements ConcertService {
 
 	@Override
 	public Image getImageForPerformer(PerformerDTO performer) throws ServiceException {
-		// TODO Auto-generated method stub
-		return null;
+		//Just stores images locally as needed because getting all of them for every client would place a great load on
+		//the servers and clients. It's unlikely an image will change so storing locally will mean that we the app is re
+		//used there is less to load. The only downside is that rarely used images will be stored. A good pre-emptive
+		//fetcher could be developed to try and get the best of both worlds.
+		try {
+			String imgName = performer.getImageName();
+
+			try {
+				File pathToFile = new File(imgName);
+				return ImageIO.read(pathToFile);
+			} catch (Exception e) {
+				//Failed to read so it musn't exist yet
+			}
+
+			AmazonS3 s3 = AmazonS3ClientBuilder
+					.standard()
+					.withRegion(Regions.AP_SOUTHEAST_2)
+					.withCredentials(
+							new AWSStaticCredentialsProvider(new BasicAWSCredentials("", "")))
+					.build();
+
+			S3Object o = s3.getObject(AWS_BUCKET, imgName);
+			S3ObjectInputStream s3is = o.getObjectContent();
+			File file = new File(imgName);
+			FileOutputStream fos = new FileOutputStream(file);
+			byte[] read_buf = new byte[1024];
+			int read_len = 0;
+			while ((read_len = s3is.read(read_buf)) > 0) {
+				fos.write(read_buf, 0, read_len);
+			}
+			s3is.close();
+			fos.close();
+
+			return ImageIO.read(file);
+		} catch (AmazonServiceException | IOException e) {
+			//TODO talk to UI designer about no image being able to load
+			return null;
+		}
 	}
 
 	@Override
