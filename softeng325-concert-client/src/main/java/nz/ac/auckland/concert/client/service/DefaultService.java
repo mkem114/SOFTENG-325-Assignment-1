@@ -35,17 +35,21 @@ import java.util.Set;
 
 public class DefaultService implements ConcertService {
 
+	//TODO Move stuff to methods; cookies, error checking
+	//Add paths to everything
+	//Go through slides for conventions
+	//Any commenting required
+	//Test suubscriber and images
+	//Hints
+	//Report
+	//Code in hand out
+	//Recommended HTTP codes
+	//Lazy/Loading
+	//OCCC
+	//
+
 	// Name of the S3 bucket that stores images.
 	private static final String AWS_BUCKET = "a-little-bit-bucket";
-
-	// Download directory - a directory named "images" in the user's home
-	// directory.
-	private static final String FILE_SEPARATOR = System
-			.getProperty("file.separator");
-	private static final String USER_DIRECTORY = System
-			.getProperty("user.home");
-	private static final String DOWNLOAD_DIRECTORY = USER_DIRECTORY
-			+ FILE_SEPARATOR + "images";
 
 	private static String WEB_SERVICE_URI = "http://localhost:10000/services/resource";
 
@@ -56,7 +60,8 @@ public class DefaultService implements ConcertService {
 		Client client = ClientBuilder.newClient();
 		try {
 
-			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/concerts").request().accept(MediaType.APPLICATION_XML);
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/concerts")
+					.request().accept(MediaType.APPLICATION_XML);
 			Response response = builder.get();
 			Set<ConcertDTO> concerts;
 			if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -78,7 +83,8 @@ public class DefaultService implements ConcertService {
 	public Set<PerformerDTO> getPerformers() throws ServiceException {
 		Client client = ClientBuilder.newClient();
 		try {
-			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/performers").request().accept(MediaType.APPLICATION_XML);
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/performers")
+					.request().accept(MediaType.APPLICATION_XML);
 			Response response = builder.get();
 			Set<PerformerDTO> performers;
 			if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -100,7 +106,8 @@ public class DefaultService implements ConcertService {
 	public UserDTO createUser(UserDTO newUser) throws ServiceException {
 		Client client = ClientBuilder.newClient();
 		try {
-			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/user").request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/user")
+					.request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
 			Response response = builder.post(Entity.entity(newUser, MediaType.APPLICATION_XML));
 
 			int responseCode = response.getStatus();
@@ -130,7 +137,8 @@ public class DefaultService implements ConcertService {
 	public UserDTO authenticateUser(UserDTO user) throws ServiceException {
 		Client client = ClientBuilder.newClient();
 		try {
-			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/login").request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/login")
+					.request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
 			Response response = builder.post(Entity.entity(user, MediaType.APPLICATION_XML));
 
 			int responseCode = response.getStatus();
@@ -212,11 +220,17 @@ public class DefaultService implements ConcertService {
 
 	@Override
 	public void registerCreditCard(CreditCardDTO creditCard) throws ServiceException {
+		if (authenticationToken == null) {
+			throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+		}
+
 		Client client = ClientBuilder.newClient();
 		try {
-			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/add_credit_card").request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/add_credit_card")
+					.request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
 			//TODO Turn mapping of authentication cookie into mapped to authtoken or something
-			Response response = builder.cookie("authenticationToken", authenticationToken.getValue()).post(Entity.entity(creditCard, MediaType.APPLICATION_XML));
+			Response response = builder.cookie("authenticationToken", authenticationToken.getValue())
+					.post(Entity.entity(creditCard, MediaType.APPLICATION_XML));
 
 			int responseCode = response.getStatus();
 			if (responseCode == Response.Status.ACCEPTED.getStatusCode()) {
@@ -241,8 +255,37 @@ public class DefaultService implements ConcertService {
 
 	@Override
 	public Set<BookingDTO> getBookings() throws ServiceException {
-		// TODO Auto-generated method stub
-		return null;
+		if (authenticationToken == null) {
+			throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+		}
+
+		Client client = ClientBuilder.newClient();
+		try {
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/add_credit_card")
+					.request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+			//TODO Turn mapping of authentication cookie into mapped to authtoken or something
+			Response response = builder.cookie("authenticationToken", authenticationToken.getValue()).get();
+
+			int responseCode = response.getStatus();
+			if (responseCode == Response.Status.OK.getStatusCode()) {
+				return response.readEntity(new GenericType<Set<BookingDTO>>() {
+				});
+			} else if (responseCode == Response.Status.NOT_FOUND.getStatusCode()) {
+				throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+			} else if (responseCode == Response.Status.UNAUTHORIZED.getStatusCode()) {
+				throw new ServiceException(Messages.BAD_AUTHENTICATON_TOKEN);
+			} else {
+				throw new ServiceException("UNEXPECTED HTTP STATUS CODE");
+			}
+		} catch (Exception e) {
+			if (ServiceException.class.isInstance(e)) {
+				throw e;
+			} else {
+				throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+			}
+		} finally {
+			client.close();
+		}
 	}
 
 	@Override
@@ -255,4 +298,6 @@ public class DefaultService implements ConcertService {
 	public void cancelSubscription() {
 		throw new UnsupportedOperationException();
 	}
+
+
 }

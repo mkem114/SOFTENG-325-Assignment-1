@@ -1,5 +1,9 @@
 package nz.ac.auckland.concert.service.domain;
 
+import nz.ac.auckland.concert.common.dto.SeatDTO;
+import nz.ac.auckland.concert.common.types.SeatNumber;
+import nz.ac.auckland.concert.common.types.SeatRow;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -11,11 +15,28 @@ import javax.persistence.Table;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+import static nz.ac.auckland.concert.common.types.SeatRow.E;
+import static nz.ac.auckland.concert.common.types.SeatRow.F;
+import static nz.ac.auckland.concert.common.types.SeatRow.G;
+import static nz.ac.auckland.concert.common.types.SeatRow.H;
+import static nz.ac.auckland.concert.common.types.SeatRow.J;
+import static nz.ac.auckland.concert.common.types.SeatRow.K;
+import static nz.ac.auckland.concert.common.types.SeatRow.L;
+import static nz.ac.auckland.concert.common.types.SeatRow.M;
+import static nz.ac.auckland.concert.common.types.SeatRow.N;
+import static nz.ac.auckland.concert.common.types.SeatRow.O;
+import static nz.ac.auckland.concert.common.types.SeatRow.P;
+import static nz.ac.auckland.concert.common.types.SeatRow.R;
+
 
 @Entity
 @IdClass(SeatId.class)
 @Table(name = "SEATS")
 public class Seat {
+
+	public static final int BANDA_MAX = 167;
+	public static final int BANDB_MAX = 81;
+	public static final int BANDC_MAX = 126;
 
 	@Id
 	@ManyToOne
@@ -35,6 +56,85 @@ public class Seat {
 	@Column(name = "status", nullable = false)
 	@Enumerated(EnumType.STRING)
 	private SeatStatus _status = SeatStatus.FREE;
+
+	public Seat(SeatDTO dto) {
+		SeatRow row = dto.getRow();
+		int seatNumInRow = dto.getNumber().intValue();
+
+		_number = 0;
+		switch (row) {
+			// BAND A
+			case M:
+				_number += 25;
+			case L:
+				_number += 25;
+			case K:
+				_number += 25;
+			case J:
+				_number += 23;
+			case G:
+				_number += 22;
+			case F:
+				_number += 21;
+			case E:
+				_number += seatNumInRow;
+				break;
+			//BAND B
+			case D:
+				_number += 21;
+			case C:
+				_number += 20;
+			case B:
+				_number += 19;
+			case A:
+				_number += seatNumInRow + BANDA_MAX;
+				break;
+			//BAND C
+			case R:
+				_number += 26;
+			case P:
+				_number += 26;
+			case O:
+				_number += 26;
+			case N:
+				_number += 22;
+			case H:
+				_number += seatNumInRow + BANDA_MAX + BANDB_MAX;
+				break;
+		}
+	}
+
+	public Seat() {
+	}
+
+	public SeatDTO convertToDTO() {
+		int count = _number;
+		int[] seatsInRows;
+		SeatRow[] rows;
+		if (_number <= BANDA_MAX) {
+			seatsInRows = new int[]{21, 22, 23, 25, 25, 25, 26};
+			rows = new SeatRow[]{E, F, G, J, K, L, M};
+		} else if (_number <= BANDB_MAX) {
+			seatsInRows = new int[]{19, 20, 21, 21};
+			rows = new SeatRow[]{E, F, G, J, K, L, M};
+			count -= BANDB_MAX;
+		} else {
+			seatsInRows = new int[]{22, 26, 26, 26, 26};
+			rows = new SeatRow[]{H, N, O, P, R};
+			count -= (BANDB_MAX + BANDA_MAX);
+		}
+
+		SeatDTO dto = new SeatDTO();
+		for (int i = 0; i < rows.length; i++) {
+			if (count > seatsInRows[i]) {
+				count -= seatsInRows[i];
+			} else {
+				dto = new SeatDTO(rows[i], new SeatNumber(count));
+				break;
+			}
+		}
+		return dto;
+	}
 
 	public Concert get_concert() {
 		return _concert;

@@ -129,7 +129,7 @@ public interface ConcertService {
 	/**
 	 * Attempts to reserve seats for a concert. The reservation is valid for a
 	 * short period that is determine by the remote service.
-	 * 2
+	 *
 	 * @param reservationRequest a description of the reservation, including 
 	 * number of seats, price band, concert identifier, and concert date. All 
 	 * fields are expected to be filled.
@@ -159,7 +159,7 @@ public interface ConcertService {
 	 * Condition: the reservation request is unsuccessful because the number of
 	 * seats within the required price band are unavailable.
 	 * Messages.INSUFFICIENT_SEATS_AVAILABLE_FOR_RESERVATION
-	 * 
+	 *
 	 * Condition: there is a communication error.
 	 * Messages.SERVICE_COMMUNICATION_ERROR
 	 * 

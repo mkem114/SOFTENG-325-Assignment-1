@@ -1,5 +1,6 @@
 package nz.ac.auckland.concert.service.domain;
 
+import nz.ac.auckland.concert.common.dto.BookingDTO;
 import nz.ac.auckland.concert.common.types.PriceBand;
 
 import javax.persistence.CollectionTable;
@@ -44,6 +45,16 @@ public class Reservation {
 	@CollectionTable(name = "RESERVATION_SEATS", joinColumns = @JoinColumn(name = "rid"))
 	@Column(name = "seat", nullable = false)
 	private Set<Integer> _seats;
+
+	@Column(name = "confirmed", nullable = false)
+	private Boolean _confirmed = false;
+
+	public BookingDTO convertToDTO() {
+		if (_confirmed) {
+
+			return new BookingDTO(_concert.get_cID(), _concert.get_title(), _dateTime, seats, _priceBand);
+		}
+	}
 
     public Long get_rID() {
         return _rID;
@@ -91,5 +102,28 @@ public class Reservation {
 
 	public void set_seats(Set<Integer> _seats) {
 		this._seats = _seats;
+	}
+
+	public Boolean get_confirmed() {
+		return _confirmed;
+	}
+
+	public void set_confirmed(Boolean _confirmed) {
+		this._confirmed = _confirmed;
+	}
+
+	@Override
+	public int hashCode() {
+		return _rID.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof Reservation)) return false;
+
+		Reservation that = (Reservation) o;
+
+		return _rID.equals(that._rID);
 	}
 }

@@ -1,5 +1,6 @@
 package nz.ac.auckland.concert.service.services;
 
+import nz.ac.auckland.concert.common.dto.BookingDTO;
 import nz.ac.auckland.concert.common.dto.ConcertDTO;
 import nz.ac.auckland.concert.common.dto.CreditCardDTO;
 import nz.ac.auckland.concert.common.dto.PerformerDTO;
@@ -7,6 +8,7 @@ import nz.ac.auckland.concert.common.dto.UserDTO;
 import nz.ac.auckland.concert.service.domain.Concert;
 import nz.ac.auckland.concert.service.domain.CreditCard;
 import nz.ac.auckland.concert.service.domain.Performer;
+import nz.ac.auckland.concert.service.domain.Reservation;
 import nz.ac.auckland.concert.service.domain.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -202,5 +204,32 @@ public class ConcertResource {
 		} finally {
 			em.close();
 		}
+	}
+
+	@GET
+	@Path("/bookings")
+	public Response getAllBookings() {
+		EntityManager em = PersistenceManager.instance().createEntityManager();
+		em.getTransaction().begin();
+
+		TypedQuery<Reservation> reservationQuery = em.createQuery("select r from Reservation r", Reservation.class);
+		List<Reservation> reservations = reservationQuery.getResultList();
+
+		if (reservations.isEmpty()) {
+			return Response.noContent().build();
+		}
+
+		Set<BookingDTO> bookingDTOs = new HashSet<>();
+		for (Reservation r : reservations) {
+			if (r.get_confirmed()) {
+				bookingDTOs.add(r.convertToDTO());
+			}
+		}
+
+		em.close();
+
+		GenericEntity<Set<BookingDTO>> wrapped = new GenericEntity<Set<BookingDTO>>(bookingDTOs) {
+		};
+		return Response.ok(wrapped).build();
 	}
 }

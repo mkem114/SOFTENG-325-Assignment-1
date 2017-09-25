@@ -1,14 +1,20 @@
 package nz.ac.auckland.concert.common.dto;
 
+import nz.ac.auckland.concert.common.jaxb.LocalDateTimeAdapter;
+import nz.ac.auckland.concert.common.types.PriceBand;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
-import nz.ac.auckland.concert.common.types.PriceBand;
 
 /**
  * DTO class to represent bookings (confirmed reservations). 
@@ -24,12 +30,24 @@ import nz.ac.auckland.concert.common.types.PriceBand;
  *                 same price band).
  *
  */
+@XmlRootElement(name = "BookingDTO")//
+@XmlAccessorType(XmlAccessType.FIELD)//
 public class BookingDTO {
 
+	@XmlAttribute(name = "ID")
 	private Long _concertId;
+
+	@XmlElement(name = "title")
 	private String _concertTitle;
+
+	@XmlElement(name = "dates")
+	@XmlJavaTypeAdapter(value = LocalDateTimeAdapter.class)
 	private LocalDateTime _dateTime;
+
+	@XmlElement(name = "seats")
 	private Set<SeatDTO> _seats;
+
+	@XmlElement(name = "priceband")
 	private PriceBand _priceBand;
 
 	public BookingDTO() {
