@@ -13,6 +13,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
+import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -23,6 +24,8 @@ import java.util.Set;
 public class DefaultService implements ConcertService {
 
 	private static String WEB_SERVICE_URI = "http://localhost:10000/services/resource";
+
+	private Cookie authenticationToken;
 
 	@Override
 	public Set<ConcertDTO> getConcerts() throws ServiceException {
@@ -78,6 +81,7 @@ public class DefaultService implements ConcertService {
 
 			int responseCode = response.getStatus();
 			if (responseCode == Response.Status.CREATED.getStatusCode()) {
+				authenticationToken = (Cookie) response.getCookies().values().toArray()[0];
 				return response.readEntity(new GenericType<UserDTO>() {
 				});
 			} else if (responseCode == Response.Status.CONFLICT.getStatusCode()) {
@@ -107,6 +111,7 @@ public class DefaultService implements ConcertService {
 
 			int responseCode = response.getStatus();
 			if (responseCode == Response.Status.ACCEPTED.getStatusCode()) {
+				authenticationToken = (Cookie) response.getCookies().values().toArray()[0];
 				return response.readEntity(new GenericType<UserDTO>(){});
 			} else if (responseCode == Response.Status.LENGTH_REQUIRED.getStatusCode()) {
 				throw new ServiceException(Messages.AUTHENTICATE_USER_WITH_MISSING_FIELDS);
@@ -147,8 +152,31 @@ public class DefaultService implements ConcertService {
 
 	@Override
 	public void registerCreditCard(CreditCardDTO creditCard) throws ServiceException {
-		// TODO Auto-generated method stub
-		
+		Client client = ClientBuilder.newClient();
+		try {
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/add_credit_card").request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+			//TODO Turn mapping of authentication cookie into mapped to authtoken or something
+			Response response = builder.cookie(authenticationToken).post(Entity.entity(creditCard, MediaType.APPLICATION_XML));
+
+			int responseCode = response.getStatus();
+			if (responseCode == Response.Status.ACCEPTED.getStatusCode()) {
+				return;
+			} else if (responseCode == Response.Status.NOT_FOUND.getStatusCode()) {
+				throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+			} else if (responseCode == Response.Status.UNAUTHORIZED.getStatusCode()) {
+				throw new ServiceException(Messages.BAD_AUTHENTICATON_TOKEN);
+			} else {
+				throw new ServiceException("UNEXPECTED HTTP STATUS CODE");
+			}
+		} catch (Exception e) {
+			if (ServiceException.class.isInstance(e)) {
+				throw e;
+			} else {
+				throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+			}
+		} finally {
+			client.close();
+		}
 	}
 
 	@Override

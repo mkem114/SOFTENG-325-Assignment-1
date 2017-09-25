@@ -1,6 +1,7 @@
 package nz.ac.auckland.concert.service.services;
 
 import nz.ac.auckland.concert.common.dto.ConcertDTO;
+import nz.ac.auckland.concert.common.dto.CreditCardDTO;
 import nz.ac.auckland.concert.common.dto.PerformerDTO;
 import nz.ac.auckland.concert.common.dto.UserDTO;
 import nz.ac.auckland.concert.service.domain.Concert;
@@ -12,10 +13,12 @@ import org.slf4j.LoggerFactory;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
@@ -162,6 +165,35 @@ public class ConcertResource {
 				em.merge(u);
 				em.getTransaction().commit();
 			}
+
+			return Response
+					.accepted()
+					.entity(new GenericEntity<UserDTO>(u.convertToDTO()) {
+					})
+					.cookie(NewCookie.valueOf(u.get_token().toString()))
+					.build();
+		} finally {
+			em.close();
+		}
+	}
+
+	@POST
+	@Path("/add_credit_card")
+	public Response addCreditCard(CreditCardDTO creditcard, @CookieParam("authenticationToken") Cookie token) {
+		if (token == null) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+
+		EntityManager em = PersistenceManager.instance().createEntityManager();
+		em.getTransaction().begin();
+
+		try {
+			User u = (User) em.createQuery("SELECT U FROM USERS U WHERE U.TOKEN=:token").setParameter("token", token.getValue()).getSingleResult();
+			if (u == null) {//TODO check if timestamp is beyond limit for authorisation
+				return Response.status(Response.Status.UNAUTHORIZED).build();
+			}
+
+			u.set_creditCard(creditcard.);
 
 			return Response
 					.accepted()

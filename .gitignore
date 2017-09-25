@@ -1,0 +1,9 @@
+/.idea/
+/softeng325-concert-service/target/
+/softeng325-concert-common/target/
+/softeng325-concert-client/target/
+.idea/dataSources.local.xml
+.idea/dataSources/
+.idea/deployment.xml
+.idea/inspectionProfiles/
+.idea/workspace.xml
