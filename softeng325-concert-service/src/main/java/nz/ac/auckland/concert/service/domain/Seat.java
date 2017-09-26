@@ -16,6 +16,10 @@ import javax.persistence.Version;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+import static nz.ac.auckland.concert.common.types.SeatRow.A;
+import static nz.ac.auckland.concert.common.types.SeatRow.B;
+import static nz.ac.auckland.concert.common.types.SeatRow.C;
+import static nz.ac.auckland.concert.common.types.SeatRow.D;
 import static nz.ac.auckland.concert.common.types.SeatRow.E;
 import static nz.ac.auckland.concert.common.types.SeatRow.F;
 import static nz.ac.auckland.concert.common.types.SeatRow.G;
@@ -41,6 +45,7 @@ public class Seat {
 	public static final int BANDA_MAX = 167;
 	public static final int BANDB_MAX = 81;
 	public static final int BANDC_MAX = 126;
+
 	@Column(name = "timestamp", nullable = true)
 	private LocalDateTime _timestamp;
 
@@ -128,10 +133,10 @@ public class Seat {
 		if (_number <= BANDA_MAX) {
 			seatsInRows = new int[]{21, 22, 23, 25, 25, 25, 26};
 			rows = new SeatRow[]{E, F, G, J, K, L, M};
-		} else if (_number <= BANDB_MAX) {
+		} else if (_number <= (BANDB_MAX + BANDA_MAX)) {
 			seatsInRows = new int[]{19, 20, 21, 21};
-			rows = new SeatRow[]{E, F, G, J, K, L, M};
-			count -= BANDB_MAX;
+			rows = new SeatRow[]{A, B, C, D};
+			count -= BANDA_MAX;
 		} else {
 			seatsInRows = new int[]{22, 26, 26, 26, 26};
 			rows = new SeatRow[]{H, N, O, P, R};
@@ -162,7 +167,8 @@ public class Seat {
 		return _datetime;
 	}
 
-	public void set_datetime(LocalDateTime _datetime) {
+	public void set_datetime(LocalDateTime datetime) {
+		_datetime = datetime;
 	}
 
 	public Integer get_number() {

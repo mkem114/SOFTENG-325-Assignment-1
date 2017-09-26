@@ -223,7 +223,7 @@ public class DefaultService implements ConcertService, ConcertService.NewsItemLi
 					.post(Entity.entity(reservationRequest, MediaType.APPLICATION_XML));
 
 			int responseCode = response.getStatus();
-			if (responseCode == Response.Status.ACCEPTED.getStatusCode()) {
+			if (responseCode == Response.Status.OK.getStatusCode()) {
 				return response.readEntity(ReservationDTO.class);
 			} else if (responseCode == Response.Status.NOT_FOUND.getStatusCode()) {
 				throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);

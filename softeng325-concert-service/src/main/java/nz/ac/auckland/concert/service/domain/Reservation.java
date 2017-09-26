@@ -9,7 +9,6 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
 public class Reservation {
 
     @Id
-    @GeneratedValue
     @Column(name = "rid", nullable = false)
     private Long _rID;
 

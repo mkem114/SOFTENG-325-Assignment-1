@@ -4,7 +4,9 @@ import nz.ac.auckland.concert.common.dto.BookingDTO;
 import nz.ac.auckland.concert.common.dto.ConcertDTO;
 import nz.ac.auckland.concert.common.dto.CreditCardDTO;
 import nz.ac.auckland.concert.common.dto.PerformerDTO;
+import nz.ac.auckland.concert.common.dto.ReservationDTO;
 import nz.ac.auckland.concert.common.dto.ReservationRequestDTO;
+import nz.ac.auckland.concert.common.dto.SeatDTO;
 import nz.ac.auckland.concert.common.dto.UserDTO;
 import nz.ac.auckland.concert.service.domain.Concert;
 import nz.ac.auckland.concert.service.domain.CreditCard;
@@ -282,11 +284,11 @@ public class ConcertResource {
 							s.set_datetime(dto.getDate());
 							s.set_timestamp(LocalDateTime.now());
 							s.set_number(i);
-							seats.add(new Seat());
+							em.persist(s);
 						}
 					} else {
 						for (Seat s : seats) {
-							if (s.get_timestamp().isBefore(LocalDateTime.now().plusMinutes(5))) {
+							if (s.get_status().equals(Seat.SeatStatus.PENDING) && s.get_timestamp().isBefore(LocalDateTime.now().minusMinutes(5))) {
 								s.set_status(Seat.SeatStatus.FREE);
 								em.merge(s);
 							}
@@ -300,9 +302,77 @@ public class ConcertResource {
 			}
 
 			//em.getTransaction().begin();
+			int min = 1;
+			int max = 374;
+			switch (dto.getSeatType()) {
+				case PriceBandA:
+					min = 1;
+					max = Seat.BANDA_MAX;
+					break;
+				case PriceBandB:
+					min = Seat.BANDA_MAX + 1;
+					max = Seat.BANDA_MAX + Seat.BANDB_MAX;
+					break;
+				case PriceBandC:
+					min = Seat.BANDA_MAX + Seat.BANDB_MAX + 1;
+					max = Seat.BANDA_MAX + Seat.BANDB_MAX + Seat.BANDC_MAX;
+					break;
+			}
+			flag = true;
+			ReservationDTO reservationDTO = new ReservationDTO();
+			while (flag) {
+				try {
+					em.getTransaction().begin();
+					TypedQuery<Seat> seatQuery = em
+							.createQuery("select s from Seat s where s._concert._cID=:cid AND " +
+									"s._datetime=:date", Seat.class)
+							.setParameter("cid", c.get_cID())
+							.setParameter("date", dto.getDate())
+							.setLockMode(LockModeType.OPTIMISTIC);
+					List<Seat> seats = seatQuery.getResultList();
+					List<Seat> pending = new ArrayList<>();
+					for (Seat s : seats) {
+						if ((s.get_status().equals(Seat.SeatStatus.FREE)) ||
+								(Seat.SeatStatus.PENDING.equals(s.get_status()) && s.get_timestamp()
+										.isBefore(LocalDateTime.now().minusMinutes(5)))) {
+							if (s.get_number() >= min && s.get_number() <= max) {
+								pending.add(s);
+								s.set_status(Seat.SeatStatus.PENDING);
+							}
+						}
+					}
+					if (pending.size() >= dto.getNumberOfSeats()) {
+						for (int i = pending.size() - 1; i >= dto.getNumberOfSeats(); i--) {
+							pending.remove(i);
+						}
+					} else {
+						return Response.status(Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE).build();
+					}
 
+					Reservation r = new Reservation();
+					r.set_concert(c);
+					r.set_confirmed(false);
+					r.set_dateTime(dto.getDate());
+					r.set_priceBand(dto.getSeatType());
+					r.set_user(u);
+					r.set_rID(UUID.randomUUID().getMostSignificantBits());
+					em.persist(r);
+					em.getTransaction().commit();
 
-			return Response.accepted().build();
+					Set<SeatDTO> sdtos = new HashSet<>();
+					for (Seat s : pending) {
+						sdtos.add(s.convertToDTO());
+						em.persist(s);
+					}
+					reservationDTO = new ReservationDTO(r.get_rID(), dto, sdtos);
+
+					flag = false;
+				} catch (OptimisticLockException e) {
+					flag = true;
+				}
+			}
+			return Response.ok(new GenericEntity<ReservationDTO>(reservationDTO) {
+			}).build();
 		} finally {
 			em.close();
 		}
