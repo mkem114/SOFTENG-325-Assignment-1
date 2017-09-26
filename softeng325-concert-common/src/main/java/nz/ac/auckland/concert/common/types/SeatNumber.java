@@ -1,9 +1,11 @@
 package nz.ac.auckland.concert.common.types;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
+import javax.persistence.Id;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import javax.xml.bind.annotation.XmlAttribute;
 
 /**
  * Class to represent seat numbers.
@@ -15,7 +17,9 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 public class SeatNumber extends Number {
 	private static final int MIN = 1;
 	private static final int MAX = 26;
-	
+
+	@Id
+	@XmlAttribute(name = "seatVal")
 	private int _value;
 	
 	public SeatNumber() {}

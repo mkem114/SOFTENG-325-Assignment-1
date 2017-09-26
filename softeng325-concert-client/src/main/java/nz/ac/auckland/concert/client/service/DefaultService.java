@@ -11,6 +11,7 @@ import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import nz.ac.auckland.concert.common.dto.BookingDTO;
 import nz.ac.auckland.concert.common.dto.ConcertDTO;
 import nz.ac.auckland.concert.common.dto.CreditCardDTO;
+import nz.ac.auckland.concert.common.dto.NewsItemDTO;
 import nz.ac.auckland.concert.common.dto.PerformerDTO;
 import nz.ac.auckland.concert.common.dto.ReservationDTO;
 import nz.ac.auckland.concert.common.dto.ReservationRequestDTO;
@@ -33,7 +34,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-public class DefaultService implements ConcertService {
+public class DefaultService implements ConcertService, ConcertService.NewsItemListener {
 
 	//TODO Move stuff to methods; cookies, error checking
 	//Add paths to everything
@@ -209,8 +210,41 @@ public class DefaultService implements ConcertService {
 
 	@Override
 	public ReservationDTO reserveSeats(ReservationRequestDTO reservationRequest) throws ServiceException {
-		// TODO Auto-generated method stub
-		return null;
+		if (authenticationToken == null) {
+			throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+		}
+
+		Client client = ClientBuilder.newClient();
+		try {
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/reservations")
+					.request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+			//TODO Turn mapping of authentication cookie into mapped to authtoken or something
+			Response response = builder.cookie("authenticationToken", authenticationToken.getValue())
+					.post(Entity.entity(reservationRequest, MediaType.APPLICATION_XML));
+
+			int responseCode = response.getStatus();
+			if (responseCode == Response.Status.ACCEPTED.getStatusCode()) {
+				return response.readEntity(ReservationDTO.class);
+			} else if (responseCode == Response.Status.NOT_FOUND.getStatusCode()) {
+				throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+			} else if (responseCode == Response.Status.UNAUTHORIZED.getStatusCode()) {
+				throw new ServiceException(Messages.BAD_AUTHENTICATON_TOKEN);
+			} else if (responseCode == Response.Status.BAD_REQUEST.getStatusCode()) {
+				throw new ServiceException(Messages.CONCERT_NOT_SCHEDULED_ON_RESERVATION_DATE);
+			} else if (responseCode == Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE.getStatusCode()) {
+				throw new ServiceException(Messages.INSUFFICIENT_SEATS_AVAILABLE_FOR_RESERVATION);
+			} else {
+				throw new ServiceException("UNEXPECTED HTTP STATUS CODE");
+			}
+		} catch (Exception e) {
+			if (ServiceException.class.isInstance(e)) {
+				throw e;
+			} else {
+				throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+			}
+		} finally {
+			client.close();
+		}
 	}
 
 	@Override
@@ -261,7 +295,7 @@ public class DefaultService implements ConcertService {
 
 		Client client = ClientBuilder.newClient();
 		try {
-			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/add_credit_card")
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/bookings")
 					.request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
 			//TODO Turn mapping of authentication cookie into mapped to authtoken or something
 			Response response = builder.cookie("authenticationToken", authenticationToken.getValue()).get();
@@ -299,5 +333,8 @@ public class DefaultService implements ConcertService {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public void newsItemReceived(NewsItemDTO newsItem) {
 
+	}
 }

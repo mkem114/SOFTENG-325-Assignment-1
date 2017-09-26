@@ -12,6 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Version;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -34,9 +35,14 @@ import static nz.ac.auckland.concert.common.types.SeatRow.R;
 @Table(name = "SEATS")
 public class Seat {
 
+	@Version
+	private int _version;
+
 	public static final int BANDA_MAX = 167;
 	public static final int BANDB_MAX = 81;
 	public static final int BANDC_MAX = 126;
+	@Column(name = "timestamp", nullable = true)
+	private LocalDateTime _timestamp;
 
 	@Id
 	@ManyToOne
@@ -49,6 +55,10 @@ public class Seat {
 	@Id
 	@Column(name = "number", nullable = false)
 	private Integer _number;
+
+	public Seat(Integer i) {
+		_number = i.intValue();
+	}
 
 	@ManyToOne
 	private Reservation _reservation;
@@ -102,6 +112,10 @@ public class Seat {
 				_number += seatNumInRow + BANDA_MAX + BANDB_MAX;
 				break;
 		}
+	}
+
+	public int get_version() {
+		return _version;
 	}
 
 	public Seat() {
@@ -174,6 +188,18 @@ public class Seat {
 
 	public void set_status(SeatStatus _status) {
 		this._status = _status;
+	}
+
+	public void set_version(int _version) {
+		this._version = _version;
+	}
+
+	public LocalDateTime get_timestamp() {
+		return _timestamp;
+	}
+
+	public void set_timestamp(LocalDateTime _timestamp) {
+		this._timestamp = _timestamp;
 	}
 
 	public enum SeatStatus {

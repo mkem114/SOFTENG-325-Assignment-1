@@ -16,6 +16,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name="RESERVATIONS")
@@ -49,10 +50,15 @@ public class Reservation {
 	@Column(name = "confirmed", nullable = false)
 	private Boolean _confirmed = false;
 
+	public Reservation() {
+	}
+
 	public BookingDTO convertToDTO() {
 		if (_confirmed) {
-
-			return new BookingDTO(_concert.get_cID(), _concert.get_title(), _dateTime, seats, _priceBand);
+			return new BookingDTO(_concert.get_cID(), _concert.get_title(), _dateTime, _seats.stream().map(c -> new Seat(c.intValue()).convertToDTO()).collect(Collectors.toSet()), _priceBand);
+		} else {
+			//TODO figure out what to do if not a booking
+			return null;
 		}
 	}
 

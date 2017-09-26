@@ -4,16 +4,20 @@ import nz.ac.auckland.concert.common.dto.BookingDTO;
 import nz.ac.auckland.concert.common.dto.ConcertDTO;
 import nz.ac.auckland.concert.common.dto.CreditCardDTO;
 import nz.ac.auckland.concert.common.dto.PerformerDTO;
+import nz.ac.auckland.concert.common.dto.ReservationRequestDTO;
 import nz.ac.auckland.concert.common.dto.UserDTO;
 import nz.ac.auckland.concert.service.domain.Concert;
 import nz.ac.auckland.concert.service.domain.CreditCard;
 import nz.ac.auckland.concert.service.domain.Performer;
 import nz.ac.auckland.concert.service.domain.Reservation;
+import nz.ac.auckland.concert.service.domain.Seat;
 import nz.ac.auckland.concert.service.domain.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
+import javax.persistence.OptimisticLockException;
 import javax.persistence.TypedQuery;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.CookieParam;
@@ -212,7 +216,8 @@ public class ConcertResource {
 		EntityManager em = PersistenceManager.instance().createEntityManager();
 		em.getTransaction().begin();
 
-		TypedQuery<Reservation> reservationQuery = em.createQuery("select r from Reservation r", Reservation.class);
+		TypedQuery<Reservation> reservationQuery = em
+				.createQuery("select r from Reservation r", Reservation.class);
 		List<Reservation> reservations = reservationQuery.getResultList();
 
 		if (reservations.isEmpty()) {
@@ -231,5 +236,75 @@ public class ConcertResource {
 		GenericEntity<Set<BookingDTO>> wrapped = new GenericEntity<Set<BookingDTO>>(bookingDTOs) {
 		};
 		return Response.ok(wrapped).build();
+	}
+
+	@POST
+	@Path("/reservations")
+	public Response reservationRequest(ReservationRequestDTO dto, @CookieParam("authenticationToken") Cookie token) {
+		if (token == null) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+
+		EntityManager em = PersistenceManager.instance().createEntityManager();
+		em.getTransaction().begin();
+		TypedQuery<Concert> reservationQuery = em
+				.createQuery("select c from Concert c where c._cID=:cid", Concert.class)
+				.setParameter("cid", dto.getConcertId());
+		Concert c = reservationQuery.getSingleResult();
+		if (!c.get_dates().contains(dto.getDate())) {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+
+		try {
+			User u = (User) em.createQuery("SELECT U FROM User U WHERE U._token = :token")
+					.setParameter("token", token.getValue()).getSingleResult();
+			if (u == null) {//TODO check if timestamp is beyond limit for authorisation
+				return Response.status(Response.Status.UNAUTHORIZED).build();
+			}
+			em.getTransaction().commit();
+
+			boolean flag = true;
+			while (flag) {
+				try {
+					em.getTransaction().begin();
+					TypedQuery<Seat> seatQuery = em
+							.createQuery("select s from Seat s where s._concert._cID=:cid AND " +
+									"s._datetime=:date", Seat.class)
+							.setParameter("cid", c.get_cID())
+							.setParameter("date", dto.getDate())
+							.setLockMode(LockModeType.OPTIMISTIC);
+					List<Seat> seats = seatQuery.getResultList();
+					if (seats.isEmpty()) {
+						for (int i = 1; i <= 374; i++) {
+							Seat s = new Seat();
+							s.set_status(Seat.SeatStatus.FREE);
+							s.set_concert(c);
+							s.set_datetime(dto.getDate());
+							s.set_timestamp(LocalDateTime.now());
+							s.set_number(i);
+							seats.add(new Seat());
+						}
+					} else {
+						for (Seat s : seats) {
+							if (s.get_timestamp().isBefore(LocalDateTime.now().plusMinutes(5))) {
+								s.set_status(Seat.SeatStatus.FREE);
+								em.merge(s);
+							}
+						}
+					}
+					em.getTransaction().commit();
+					flag = false;
+				} catch (OptimisticLockException e) {
+					flag = true;
+				}
+			}
+
+			//em.getTransaction().begin();
+
+
+			return Response.accepted().build();
+		} finally {
+			em.close();
+		}
 	}
 }
