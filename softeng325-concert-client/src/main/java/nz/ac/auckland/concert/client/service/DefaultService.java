@@ -249,7 +249,41 @@ public class DefaultService implements ConcertService, ConcertService.NewsItemLi
 
 	@Override
 	public void confirmReservation(ReservationDTO reservation) throws ServiceException {
-		// TODO Auto-generated method stub
+		if (authenticationToken == null) {
+			throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+		}
+
+		Client client = ClientBuilder.newClient();
+		try {
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/book")
+					.request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
+			//TODO Turn mapping of authentication cookie into mapped to authtoken or something
+			Response response = builder.cookie("authenticationToken", authenticationToken.getValue())
+					.post(Entity.entity(reservation, MediaType.APPLICATION_XML));
+
+			int responseCode = response.getStatus();
+			if (responseCode == Response.Status.OK.getStatusCode()) {
+				return;
+			} else if (responseCode == Response.Status.NOT_FOUND.getStatusCode()) {
+				throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+			} else if (responseCode == Response.Status.UNAUTHORIZED.getStatusCode()) {
+				throw new ServiceException(Messages.BAD_AUTHENTICATON_TOKEN);
+			} else if (responseCode == Response.Status.PAYMENT_REQUIRED.getStatusCode()) {
+				throw new ServiceException(Messages.CREDIT_CARD_NOT_REGISTERED);
+			} else if (responseCode == Response.Status.REQUEST_TIMEOUT.getStatusCode()) {
+				throw new ServiceException(Messages.EXPIRED_RESERVATION);
+			} else {
+				throw new ServiceException("UNEXPECTED HTTP STATUS CODE");
+			}
+		} catch (Exception e) {
+			if (ServiceException.class.isInstance(e)) {
+				throw e;
+			} else {
+				throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+			}
+		} finally {
+			client.close();
+		}
 	}
 
 	@Override

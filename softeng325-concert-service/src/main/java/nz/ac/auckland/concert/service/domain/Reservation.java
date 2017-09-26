@@ -1,6 +1,7 @@
 package nz.ac.auckland.concert.service.domain;
 
 import nz.ac.auckland.concert.common.dto.BookingDTO;
+import nz.ac.auckland.concert.common.dto.SeatDTO;
 import nz.ac.auckland.concert.common.types.PriceBand;
 
 import javax.persistence.CollectionTable;
@@ -14,8 +15,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name="RESERVATIONS")
@@ -53,7 +54,11 @@ public class Reservation {
 
 	public BookingDTO convertToDTO() {
 		if (_confirmed) {
-			return new BookingDTO(_concert.get_cID(), _concert.get_title(), _dateTime, _seats.stream().map(c -> new Seat(c.intValue()).convertToDTO()).collect(Collectors.toSet()), _priceBand);
+			Set<SeatDTO> sDTOs = new HashSet<>();
+			for (Integer i : _seats) {
+				sDTOs.add(new Seat(i).convertToDTO());
+			}
+			return new BookingDTO(_concert.get_cID(), _concert.get_title(), _dateTime, sDTOs, _priceBand);
 		} else {
 			//TODO figure out what to do if not a booking
 			return null;

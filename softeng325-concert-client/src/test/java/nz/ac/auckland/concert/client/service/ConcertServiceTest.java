@@ -1,16 +1,5 @@
 package nz.ac.auckland.concert.client.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Set;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-
 import nz.ac.auckland.concert.common.dto.BookingDTO;
 import nz.ac.auckland.concert.common.dto.ConcertDTO;
 import nz.ac.auckland.concert.common.dto.CreditCardDTO;
@@ -24,7 +13,6 @@ import nz.ac.auckland.concert.common.types.PriceBand;
 import nz.ac.auckland.concert.common.types.SeatRow;
 import nz.ac.auckland.concert.common.util.TheatreLayout;
 import nz.ac.auckland.concert.service.services.ConcertApplication;
-
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -36,6 +24,18 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests for a ConcertService implementation.
@@ -325,9 +325,9 @@ public class ConcertServiceTest {
 			_service.confirmReservation(reservation);
 			
 			// Make a request to check that this user has a booking.
-			Set<BookingDTO> bookings = _service.getBookings();
+			List<BookingDTO> bookings = new ArrayList<BookingDTO>(_service.getBookings());
 			assertEquals(1, bookings.size());
-			BookingDTO bookingDTO = bookings.iterator().next();
+			BookingDTO bookingDTO = bookings.get(0);
 			assertEquals(new Long(1), bookingDTO.getConcertId());
 			assertEquals(dateTime, bookingDTO.getDateTime());
 			assertEquals(reservation.getSeats(), bookingDTO.getSeats());

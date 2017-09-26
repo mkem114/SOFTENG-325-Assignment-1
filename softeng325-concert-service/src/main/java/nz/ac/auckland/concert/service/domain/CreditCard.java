@@ -29,6 +29,9 @@ public class CreditCard {
     @Column(name = "date", nullable = false)
     private LocalDate _expiryDate;
 
+	public CreditCard() {
+	}
+
 	public CreditCard(CreditCardDTO dto) {
 		_number = dto.getNumber();
 		_name = dto.getName();
