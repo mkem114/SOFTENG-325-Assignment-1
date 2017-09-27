@@ -35,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 public class DefaultService implements ConcertService, ConcertService.NewsItemListener {
 
@@ -360,12 +361,51 @@ public class DefaultService implements ConcertService, ConcertService.NewsItemLi
 
 	@Override
 	public void subscribeForNewsItems(NewsItemListener listener) {
-		throw new UnsupportedOperationException();
+		if (authenticationToken == null) {
+			throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+		}
+		Client client = ClientBuilder.newClient();
+		try {
+			Future future = client
+					.target(WEB_SERVICE_URI + "/subscribe").request().cookie(authenticationToken).async().get();
+		} catch (Exception e) {
+			if (ServiceException.class.isInstance(e)) {
+				throw e;
+			} else {
+				throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+			}
+		} finally {
+			client.close();
+		}
 	}
 
 	@Override
 	public void cancelSubscription() {
-		throw new UnsupportedOperationException();
+		if (authenticationToken == null) {
+			throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+		}
+		Client client = ClientBuilder.newClient();
+		try {
+			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/subscribe")
+					.request(MediaType.APPLICATION_XML);
+			Response response = builder
+					.cookie("authenticationToken", authenticationToken.getValue())
+					.delete();
+			int responseCode = response.getStatus();
+			if (responseCode == Response.Status.OK.getStatusCode()) {
+				return;
+			} else {
+				throw new ServiceException("UNEXPECTED HTTP STATUS CODE");
+			}
+		} catch (Exception e) {
+			if (ServiceException.class.isInstance(e)) {
+				throw e;
+			} else {
+				throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+			}
+		} finally {
+			client.close();
+		}
 	}
 
 	@Override

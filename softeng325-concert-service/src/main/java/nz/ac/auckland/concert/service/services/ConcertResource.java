@@ -491,9 +491,9 @@ public class ConcertResource {
 		}
 	}
 
-	@GET
+	@POST
 	@Path("/subscribe")
-	public void subscribe(@Suspended AsyncResponse response, @CookieParam("authenticationToken") Cookie token) {
+	public Response subscribe(@Suspended AsyncResponse response, @CookieParam("authenticationToken") Cookie token) {
 		_subscriptions.put(token, response);
 		_subscriptionsReverse.put(response, token);
 		//Get latest updates
@@ -520,6 +520,7 @@ public class ConcertResource {
 			} finally {
 				em.close();
 			}
+			return Response.ok().build();
 		} catch (Exception e) {
 			//Message wasn't sent,
 			_subscriptions.remove(_subscriptionsReverse.get(response));
