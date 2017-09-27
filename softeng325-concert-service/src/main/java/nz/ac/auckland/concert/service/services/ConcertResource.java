@@ -222,7 +222,7 @@ public class ConcertResource {
 			try {
 				User u = (User) em.createQuery("SELECT U FROM User U WHERE U._token = :token")
 						.setParameter("token", token.getValue()).getSingleResult();
-				if (u == null) {//TODO check if timestamp is beyond limit for authorisation
+				if (u == null) {
 					return Response.status(Response.Status.UNAUTHORIZED).build();
 				}
 
@@ -253,7 +253,7 @@ public class ConcertResource {
 
 			User u = (User) em.createQuery("SELECT U FROM User U WHERE U._token = :token")
 					.setParameter("token", token.getValue()).getSingleResult();
-			if (u == null) {//TODO check if timestamp is beyond limit for authorisation
+			if (u == null) {
 				return Response.status(Response.Status.UNAUTHORIZED).build();
 			}
 
@@ -300,7 +300,7 @@ public class ConcertResource {
 			try {
 				User u = (User) em.createQuery("SELECT U FROM User U WHERE U._token = :token")
 						.setParameter("token", token.getValue()).getSingleResult();
-				if (u == null) {//TODO check if timestamp is beyond limit for authorisation
+				if (u == null) {
 					return Response.status(Response.Status.UNAUTHORIZED).build();
 				}
 				em.getTransaction().commit();
@@ -438,7 +438,7 @@ public class ConcertResource {
 			try {
 				User u = (User) em.createQuery("SELECT U FROM User U WHERE U._token = :token")
 						.setParameter("token", token.getValue()).getSingleResult();
-				if (u == null) {//TODO check if timestamp is beyond limit for authorisation
+				if (u == null) {
 					return Response.status(Response.Status.UNAUTHORIZED).build();
 				}
 				if (u.get_creditCard() == null) {

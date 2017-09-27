@@ -122,7 +122,6 @@ public interface ConcertService {
 	 * 
 	 * Condition: there is a communication error.
 	 * Messages.SERVICE_COMMUNICATION_ERROR
-	 * TODO PIazza question 54 REPORT
 	 */
 	Image getImageForPerformer(PerformerDTO performer) throws ServiceException;
 

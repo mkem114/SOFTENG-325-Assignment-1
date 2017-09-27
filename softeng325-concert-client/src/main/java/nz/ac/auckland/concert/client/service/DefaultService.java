@@ -39,14 +39,6 @@ import java.util.concurrent.Future;
 
 public class DefaultService implements ConcertService, ConcertService.NewsItemListener {
 
-	//TODO Move stuff to methods; cookies, error checking
-	//Go through slides for conventions
-	//Any commenting required
-	//Hints
-	//Report
-	//Code in hand out
-	//Recommended HTTP codes
-
 	// Name of the S3 bucket that stores images.
 	private static final String AWS_BUCKET = "a-little-bit-bucket";
 
@@ -225,7 +217,6 @@ public class DefaultService implements ConcertService, ConcertService.NewsItemLi
 		try {
 			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/reservations")
 					.request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
-			//TODO Turn mapping of authentication cookie into mapped to authtoken or something
 			Response response = builder.cookie("authenticationToken", authenticationToken.getValue())
 					.post(Entity.entity(reservationRequest, MediaType.APPLICATION_XML));
 
@@ -264,7 +255,6 @@ public class DefaultService implements ConcertService, ConcertService.NewsItemLi
 		try {
 			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/book")
 					.request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
-			//TODO Turn mapping of authentication cookie into mapped to authtoken or something
 			Response response = builder.cookie("authenticationToken", authenticationToken.getValue())
 					.post(Entity.entity(reservation, MediaType.APPLICATION_XML));
 
@@ -303,7 +293,6 @@ public class DefaultService implements ConcertService, ConcertService.NewsItemLi
 		try {
 			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/add_credit_card")
 					.request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
-			//TODO Turn mapping of authentication cookie into mapped to authtoken or something
 			Response response = builder.cookie("authenticationToken", authenticationToken.getValue())
 					.post(Entity.entity(creditCard, MediaType.APPLICATION_XML));
 
@@ -338,7 +327,6 @@ public class DefaultService implements ConcertService, ConcertService.NewsItemLi
 		try {
 			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/bookings")
 					.request(MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_XML);
-			//TODO Turn mapping of authentication cookie into mapped to authtoken or something
 			Response response = builder.cookie("authenticationToken", authenticationToken.getValue()).get();
 
 			int responseCode = response.getStatus();

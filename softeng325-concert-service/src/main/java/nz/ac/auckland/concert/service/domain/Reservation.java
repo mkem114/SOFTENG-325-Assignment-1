@@ -60,7 +60,7 @@ public class Reservation {
 			}
 			return new BookingDTO(_concert.get_cID(), _concert.get_title(), _dateTime, sDTOs, _priceBand);
 		} else {
-			//TODO figure out what to do if not a booking
+			//TODO talk to team out what to do if not a booking
 			return null;
 		}
 	}
