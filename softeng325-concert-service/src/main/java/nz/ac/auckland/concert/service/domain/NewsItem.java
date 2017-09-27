@@ -22,8 +22,11 @@ public class NewsItem {
     @Column(name = "content", nullable = false)
     private String _content;
 
-    public Long get_niID() {
-        return _niID;
+	public NewsItem() {
+	}
+
+	public Long get_niID() {
+		return _niID;
     }
 
     public void set_niID(Long _niID) {
@@ -45,4 +48,19 @@ public class NewsItem {
     public void set_content(String _content) {
         this._content = _content;
     }
+
+	@Override
+	public int hashCode() {
+		return _niID != null ? _niID.hashCode() : 0;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof NewsItem)) return false;
+
+		NewsItem newsItem = (NewsItem) o;
+
+		return _niID != null ? _niID.equals(newsItem._niID) : newsItem._niID == null;
+	}
 }

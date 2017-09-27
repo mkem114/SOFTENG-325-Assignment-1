@@ -10,12 +10,11 @@ import nz.ac.auckland.concert.common.dto.SeatDTO;
 import nz.ac.auckland.concert.common.dto.UserDTO;
 import nz.ac.auckland.concert.service.domain.Concert;
 import nz.ac.auckland.concert.service.domain.CreditCard;
+import nz.ac.auckland.concert.service.domain.NewsItem;
 import nz.ac.auckland.concert.service.domain.Performer;
 import nz.ac.auckland.concert.service.domain.Reservation;
 import nz.ac.auckland.concert.service.domain.Seat;
 import nz.ac.auckland.concert.service.domain.User;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
@@ -23,10 +22,13 @@ import javax.persistence.OptimisticLockException;
 import javax.persistence.TypedQuery;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.CookieParam;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
@@ -35,8 +37,10 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -51,7 +55,8 @@ import static nz.ac.auckland.concert.service.services.ConcertApplication.RESERVA
 @Consumes({MediaType.APPLICATION_XML})
 public class ConcertResource {
 
-	private static Logger _logger = LoggerFactory.getLogger(ConcertResource.class);
+	private Map<Cookie, AsyncResponse> _subscriptions = new HashMap<>();
+	private Map<AsyncResponse, Cookie> _subscriptionsReverse = new HashMap<>();
 
 	@GET
 	@Path("/concerts")
@@ -483,6 +488,79 @@ public class ConcertResource {
 			}
 		} finally {
 			em.close();
+		}
+	}
+
+	@GET
+	@Path("/subscribe")
+	public void subscribe(@Suspended AsyncResponse response, @CookieParam("authenticationToken") Cookie token) {
+		_subscriptions.put(token, response);
+		_subscriptionsReverse.put(response, token);
+		//Get latest updates
+		try {
+			EntityManager em = PersistenceManager.instance().createEntityManager();
+			em.getTransaction().begin();
+			try {
+				User u = (User) em.createQuery("SELECT U FROM User U WHERE U._token = :token")
+						.setParameter("token", _subscriptionsReverse.get(response).getValue())
+						.getSingleResult();
+				List<NewsItem> news = (List<NewsItem>) em.createQuery("SELECT n FROM NewsItem n")
+						.getResultList();
+				if (!(u == null)) {
+					boolean after = false;
+					for (NewsItem n : news) {
+						if (after) {
+							response.resume(n.get_content());
+						}
+						if (n.get_niID().equals(u.get_last().get_niID())) {
+							after = true;
+						}
+					}
+				}
+			} finally {
+				em.close();
+			}
+		} catch (Exception e) {
+			//Message wasn't sent,
+			_subscriptions.remove(_subscriptionsReverse.get(response));
+			_subscriptionsReverse.remove(response);
+		}
+	}
+
+	@DELETE
+	@Path("/unsubscribe")
+	public void unsubscribe(@CookieParam("authenticationToken") Cookie token) {
+		_subscriptionsReverse.remove(_subscriptions.get(token));
+		_subscriptions.remove(token);
+	}
+
+	@POST
+	public void send(String message) {
+		for (AsyncResponse response : _subscriptions.values()) {
+			try {
+				response.resume(message);
+				EntityManager em = PersistenceManager.instance().createEntityManager();
+				em.getTransaction().begin();
+				try {
+					User u = (User) em.createQuery("SELECT U FROM User U WHERE U._token = :token")
+							.setParameter("token", _subscriptionsReverse.get(response).getValue())
+							.getSingleResult();
+					NewsItem n = (NewsItem) em.createQuery("SELECT n FROM NewsItem n where n._content=:msg")
+							.setParameter("msg", message)
+							.getSingleResult();
+					if (!(u == null)) {
+						u.set_last(n);
+						em.merge(u);
+						em.getTransaction().commit();
+					}
+				} finally {
+					em.close();
+				}
+			} catch (Exception e) {
+				//Message wasn't sent,
+				_subscriptions.remove(_subscriptionsReverse.get(response));
+				_subscriptionsReverse.remove(response);
+			}
 		}
 	}
 }

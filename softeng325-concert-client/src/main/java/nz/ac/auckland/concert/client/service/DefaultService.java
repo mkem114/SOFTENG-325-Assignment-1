@@ -23,6 +23,8 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.InvocationCallback;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
@@ -359,7 +361,6 @@ public class DefaultService implements ConcertService, ConcertService.NewsItemLi
 	@Override
 	public void subscribeForNewsItems(NewsItemListener listener) {
 		throw new UnsupportedOperationException();
-		
 	}
 
 	@Override
@@ -369,6 +370,18 @@ public class DefaultService implements ConcertService, ConcertService.NewsItemLi
 
 	@Override
 	public void newsItemReceived(NewsItemDTO newsItem) {
+		Client client = ClientBuilder.newClient();
+		final WebTarget target =
+				client.target("chat");
+		target.request()
+				.async()
+				.get(new InvocationCallback<String>() {
+					public void completed(String message) {
+						target.request().async().get(this);
+					}
 
+					public void failed(Throwable t) {
+					}
+				});
 	}
 }

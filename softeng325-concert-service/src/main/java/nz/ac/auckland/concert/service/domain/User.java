@@ -37,6 +37,9 @@ public class User {
 	@Column(name = "tokenTimeStamp", nullable = true)
 	private LocalDateTime _tokenTimeStamp;
 
+	@ManyToOne
+	private NewsItem _last;
+
 	public User() {
 	}
 
@@ -51,7 +54,7 @@ public class User {
 		return _username;
     }
 
-	public void set_user2name(String _username) {
+	public void set_username(String _username) {
 		this._username = _username;
     }
 
@@ -113,5 +116,13 @@ public class User {
 
 	public UserDTO convertToDTO() {
 		return new UserDTO(_username, _passwordHash, _lastname, _firstname);
+	}
+
+	public NewsItem get_last() {
+		return _last;
+	}
+
+	public void set_last(NewsItem _last) {
+		this._last = _last;
 	}
 }
