@@ -40,30 +40,28 @@ import java.util.concurrent.Future;
 public class DefaultService implements ConcertService, ConcertService.NewsItemListener {
 
 	//TODO Move stuff to methods; cookies, error checking
-	//Add paths to everything
 	//Go through slides for conventions
 	//Any commenting required
-	//Test suubscriber and images
 	//Hints
 	//Report
 	//Code in hand out
 	//Recommended HTTP codes
-	//Lazy/Loading
-	//OCCC
-	//
 
 	// Name of the S3 bucket that stores images.
 	private static final String AWS_BUCKET = "a-little-bit-bucket";
 
 	private static String WEB_SERVICE_URI = "http://localhost:10000/services/resource";
 
+	private DefaultService _inst = this;
+
 	private Cookie authenticationToken;
+	private Set<ConcertDTO> _concertCache;
+	private Set<PerformerDTO> _performerCache;
 
 	@Override
 	public Set<ConcertDTO> getConcerts() throws ServiceException {
 		Client client = ClientBuilder.newClient();
 		try {
-
 			Invocation.Builder builder = client.target(WEB_SERVICE_URI + "/concerts")
 					.request().accept(MediaType.APPLICATION_XML);
 			Response response = builder.get();
@@ -71,6 +69,9 @@ public class DefaultService implements ConcertService, ConcertService.NewsItemLi
 			if (response.getStatus() == Response.Status.OK.getStatusCode()) {
 				concerts = response.readEntity(new GenericType<Set<ConcertDTO>>() {
 				});
+				_concertCache = concerts;
+			} else if (response.getStatus() == Response.Status.NOT_MODIFIED.getStatusCode()) {
+				return _concertCache;
 			} else {
 				concerts = new HashSet<>();
 			}
@@ -94,6 +95,9 @@ public class DefaultService implements ConcertService, ConcertService.NewsItemLi
 			if (response.getStatus() == Response.Status.OK.getStatusCode()) {
 				performers = response.readEntity(new GenericType<Set<PerformerDTO>>() {
 				});
+				_performerCache = performers;
+			} else if (response.getStatus() == Response.Status.NOT_MODIFIED.getStatusCode()) {
+				return _performerCache;
 			} else {
 				performers = new HashSet<>();
 			}
@@ -367,7 +371,19 @@ public class DefaultService implements ConcertService, ConcertService.NewsItemLi
 		Client client = ClientBuilder.newClient();
 		try {
 			Future future = client
-					.target(WEB_SERVICE_URI + "/subscribe").request().cookie(authenticationToken).async().get();
+					.target(WEB_SERVICE_URI + "/subscribe").request().cookie(authenticationToken).async()
+					.get(new InvocationCallback<NewsItemDTO>() {
+
+						@Override
+						public void completed(NewsItemDTO newsItemDTO) {
+							_inst.newsItemReceived(newsItemDTO);
+						}
+
+						@Override
+						public void failed(Throwable throwable) {
+							//TODO Talk to client or architect
+						}
+					});
 		} catch (Exception e) {
 			if (ServiceException.class.isInstance(e)) {
 				throw e;
