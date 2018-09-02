@@ -1,0 +1,14 @@
+All tests failed however after fix all tests passed. Concert resource class is singleton. Credit card don't need separate class for domain model. Expired reservation is not effective (as what happen if no booking confirmation). No subscription test. No informative commenting.
+
+Do you remember why it failed all test? I'm just curious because I tested it on UG4. Was it just the way I setup H2 or something like that? Maybe IntelliJ was doing something when I ran maven goals from it.
+Wouldn't you want credit cards separate from users so that more than one user can have the same card (obvious example being couples having a shared card), then you would just have one authentication token from the card company (better for revocation)? There is a penalty of going to another table but if users don't have cards or share one then there's less space. 
+I'm confused by what you mean about ConcertReservation class being a singleton, wasn't it supposed to not be? Did I do something that made it act that way?
+P.S thanks for being a great lecturer again and helping us in the labs!
+
+I've just looked at the marker's feedback and your code. The problem with the tests failing seems to concern the username and password for the database. In the persistence.xml file, the password value is "", but changing it to the default "sa" fixes the problem. I guess you had no password on the machine you developed on?
+
+Regarding your points about credit cards, they're all good points and definitely justify your approach. I agree with your rationale.
+
+The ConcertResource class is registered as a singleton in ConcertApplication. The singleton model is appropriate where the ConcertResource instance has state, and you want the same instance to process all incoming requests. We did things this way in the early labs before we introduced JPA and persistence - prior to this Resource objects held the Web service state (concerts, parolees etc.) in memory. When using a database to store the state, it's more appropriate to use the Resource-instance-per-request model, where JAX-RS creates a new instance of the ConcertResource for each request. To this you'd add the ConcertResource class to ConcertApplication's  _classes member, instead of a a ConcertResource instance to its _singletons member. Using the singleton model works ok, but when using stateless Resource objects it's better practice to use the Resource-instance-per-request model. 
+
+There was no penalty for the problem with persistence.xml file. I've reversed the penalty concerning modelling of credit cards. The feedback about ConcertResource being a singleton was just a comment, and there was no penalty for this. Reversing the penalty regarding credit cards hasn't had an effect on your overall mark for the practical component of part 1 of SOFTENG 325. It remains at 13/15, which is a solid mark and reflects an excellent standard of practical work.
